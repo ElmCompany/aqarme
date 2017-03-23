@@ -6,6 +6,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @SpringBootApplication
 public class AqarApplication implements CommandLineRunner {
@@ -20,8 +21,8 @@ public class AqarApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        List<String> run = aqarService.run();
-        System.out.println(run.size());
+        Stream<String> run = aqarService.run();
+
         run.forEach(System.out::println);
     }
 }

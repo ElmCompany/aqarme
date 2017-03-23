@@ -31,11 +31,10 @@ public class AqarService {
         this.aqarSearchList = aqarSearch;
     }
 
-    public List<String> run() {
+    public Stream<String> run() {
         return aqarSearchList
                 .stream()
-                .flatMap(this::_run)
-                .collect(toList());
+                .flatMap(this::_run);
     }
 
      public Stream<String> _run(AqarSearch aqarSearch) {

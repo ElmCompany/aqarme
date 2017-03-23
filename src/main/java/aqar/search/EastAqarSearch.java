@@ -29,6 +29,6 @@ public class EastAqarSearch implements AqarSearch {
 
     @Override
     public Function<Double, Boolean> getCoordinatesMatcher() {
-        return longitude -> longitude >= maxLongitude;
+        return longitude -> longitude <= maxLongitude;
     }
 }
