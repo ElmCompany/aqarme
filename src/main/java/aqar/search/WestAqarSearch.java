@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.function.Function;
 
-//@Service
+@Service
 public class WestAqarSearch implements AqarSearch {
 
     @Value("${aqar.base.url}")
@@ -29,6 +29,6 @@ public class WestAqarSearch implements AqarSearch {
 
     @Override
     public Function<Double, Boolean> getCoordinatesMatcher() {
-        return longitude -> longitude <= maxLongitude;
+        return longitude -> longitude >= maxLongitude;
     }
 }

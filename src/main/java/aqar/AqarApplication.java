@@ -22,5 +22,6 @@ public class AqarApplication implements CommandLineRunner {
 
         List<String> run = aqarService.run();
         System.out.println(run.size());
+        System.out.println(run);
     }
 }

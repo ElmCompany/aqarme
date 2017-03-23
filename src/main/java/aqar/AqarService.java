@@ -42,7 +42,7 @@ public class AqarService {
         return rangeClosed(1, 1).boxed()
                 .peek(it -> sleep())
                 .flatMap(it -> _forPage(aqarSearch, it))
-                .map(it -> it.select("a").attr("href"));
+                .map(it -> baseUrl + it.select("a").attr("href"));
     }
 
     private Stream<Element> _forPage(AqarSearch aqarSearch, int pageNumber) {
