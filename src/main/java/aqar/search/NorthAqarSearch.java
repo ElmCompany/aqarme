@@ -1,10 +1,12 @@
 package aqar.search;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.function.Function;
 
+@ConditionalOnProperty(name = "aqar.search.north", havingValue = "active")
 @Service
 public class NorthAqarSearch implements AqarSearch {
 

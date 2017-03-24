@@ -28,6 +28,8 @@ public class AqarService {
     private int maxPrice;
     @Value("${aqar.num.pages}")
     private int toalPageNum;
+    @Value("${aqar.sleepMillis}")
+    private long sleepMillis;
 
     private List<AqarSearch> aqarSearchList;
     private ProcessedAdsRepository adsRepository;
@@ -62,7 +64,7 @@ public class AqarService {
             return list.stream()
                     .parallel()
                     .peek(it -> sleep())
-                    .filter(this::notYetProcessed)
+                    .filter(this::notProcessed)
                     .filter(this::matchesPrice)
                     .filter(this::hasImage)
                     .map(this::elementPage)
@@ -75,11 +77,13 @@ public class AqarService {
         return Stream.empty();
     }
 
-    private boolean notYetProcessed(Element element) {
+    private boolean notProcessed(Element element) {
         String addNumber = element.id().replaceAll("[^\\d.]", "");
-        if (adsRepository.addNumberExists(addNumber)){
+        if (adsRepository.addNumberExists(addNumber)) {
+            System.out.printf("ad with id %s is already processed\n", addNumber);
             return false;
-        }else{
+        } else {
+            System.out.printf("start process ad: %s\n", addNumber);
             ProcessedAds ads = new ProcessedAds(addNumber);
             adsRepository.save(ads);
             return true;
@@ -129,7 +133,7 @@ public class AqarService {
 
     private void sleep() {
         try {
-            Thread.sleep(5000);
+            Thread.sleep(sleepMillis);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
