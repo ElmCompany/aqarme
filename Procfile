@@ -1,1 +1,1 @@
-web: java -Dserver.port=$PORT $JAVA_OPTS -jar build/libs/aqar-*.jar
+web: java -Dserver.port=$PORT $JAVA_OPTS -jar build/libs/*aqarme-*.jar
