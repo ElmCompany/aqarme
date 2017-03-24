@@ -24,6 +24,8 @@ public class AqarService {
     private String baseUrl;
     @Value("${aqar.max.price}")
     private int maxPrice;
+    @Value("${aqar.num.pages}")
+    private int toalPageNum;
 
     private List<AqarSearch> aqarSearchList;
 
@@ -38,7 +40,7 @@ public class AqarService {
     }
 
     public Stream<String> _run(AqarSearch aqarSearch) {
-        return rangeClosed(1, 1).boxed()
+        return rangeClosed(1, toalPageNum).boxed()
                 .peek(it -> sleep())
                 .flatMap(it -> _forPage(aqarSearch, it))
                 .map(this::getShortUrl);
@@ -91,7 +93,7 @@ public class AqarService {
                 .orElse(false);
     }
 
-    private String getShortUrl(Element elementPage){
+    private String getShortUrl(Element elementPage) {
         return elementPage.select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("/ad/"))

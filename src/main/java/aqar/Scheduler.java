@@ -1,5 +1,6 @@
 package aqar;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -7,6 +8,8 @@ import java.util.stream.Stream;
 
 @Component
 public class Scheduler {
+
+    private final static int RATE = 3;
 
     private AqarService aqarService;
     private MessengerService messengerService;
@@ -16,7 +19,8 @@ public class Scheduler {
         this.messengerService = messengerService;
     }
 
-    @Scheduled(cron = "0 0 10 * * *", zone = "GMT")
+//    @Scheduled(cron = "0 0 10 * * *", zone = "GMT")       // run every day at 10 AM
+//    @Scheduled(fixedRate = 1000 * 60 * 60 * RATE)
     public void run() {
         Stream<String> run = aqarService.run();
 
