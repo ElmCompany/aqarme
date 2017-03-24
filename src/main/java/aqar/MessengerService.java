@@ -1,6 +1,5 @@
 package aqar;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -15,8 +14,6 @@ public class MessengerService {
     private String url;
 
     private RestTemplate restTemplate;
-
-    private ObjectMapper objectMapper = new ObjectMapper();
 
     public MessengerService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
