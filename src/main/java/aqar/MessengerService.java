@@ -4,6 +4,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriUtils;
+
+import java.io.UnsupportedEncodingException;
 
 @Service
 public class MessengerService {
@@ -20,10 +23,9 @@ public class MessengerService {
     }
 
     public void send(String recipient, String str) {
-
         String message = String.format(MESSAGE, recipient, str);
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
 
         HttpEntity<String> entity = new HttpEntity<>(message, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);

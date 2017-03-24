@@ -52,7 +52,7 @@ public class AqarService {
                 .boxed()
                 .peek(it -> sleep())
                 .flatMap(it -> _forPage(aqarSearch, it))
-                .map(this::getShortUrl);
+                .map(this::getShortUrlWithTitle);
     }
 
     private Stream<Element> _forPage(AqarSearch aqarSearch, int pageNumber) {
@@ -114,11 +114,12 @@ public class AqarService {
                 .orElse(false);
     }
 
-    private String getShortUrl(Element detailsPage) {
+    private String getShortUrlWithTitle(Element detailsPage) {
+        String title =  detailsPage.select(".title h3 a").text();
         return detailsPage.select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("/ad/"))
-                .map(Element::text)
+                .map((element) -> title + " " +"https://" + element.text())
                 .findFirst()
                 .orElse(null);
     }
