@@ -63,8 +63,8 @@ public class AqarService {
 
             return list.stream()
                     .parallel()
-                    .peek(it -> sleep())
                     .filter(this::notProcessed)
+                    .peek(it -> sleep())
                     .filter(this::matchesPrice)
                     .filter(this::hasImage)
                     .map(this::elementPage)
