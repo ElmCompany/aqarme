@@ -34,7 +34,7 @@ public class MessengerService {
         if (response.getStatusCode() != HttpStatus.OK){
             System.out.println(response);
         }else{
-            System.err.printf("Ad: %s, response: %s", str, response.getStatusCode());
+            System.err.printf("Ad: %s, response: %s\n", str, response.getStatusCode());
         }
     }
 }
