@@ -14,6 +14,10 @@ public class ApiController {
 
     private ProcessedAdsRepository adsRepository;
 
+    public ApiController(ProcessedAdsRepository adsRepository) {
+        this.adsRepository = adsRepository;
+    }
+
     @GetMapping
     public ResponseEntity<?> listProcessedAds() {
         return ok(adsRepository.findAll());
