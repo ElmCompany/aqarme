@@ -80,10 +80,10 @@ public class AqarService {
     private boolean notProcessed(Element element) {
         String addNumber = element.id().replaceAll("[^\\d.]", "");
         if (adsRepository.addNumberExists(addNumber)) {
-            System.out.printf("ad with id %s is already processed\n", addNumber);
+            System.out.printf("Ad with id %s is already processed\n", addNumber);
             return false;
         } else {
-            System.out.printf("start process ad: %s\n", addNumber);
+            System.out.printf("start process Ad: %s\n", addNumber);
             ProcessedAds ads = new ProcessedAds(addNumber);
             adsRepository.save(ads);
             return true;
