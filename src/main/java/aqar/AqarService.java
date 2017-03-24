@@ -129,7 +129,7 @@ public class AqarService {
 
     private void sleep() {
         try {
-            Thread.sleep(1000 * 60 * 3);// every 3 minutes
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
