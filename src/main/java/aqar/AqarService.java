@@ -11,10 +11,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.IntStream.*;
+import static java.util.stream.IntStream.rangeClosed;
 
 @Slf4j
 @Service
@@ -37,11 +37,11 @@ public class AqarService {
                 .flatMap(this::_run);
     }
 
-     public Stream<String> _run(AqarSearch aqarSearch) {
+    public Stream<String> _run(AqarSearch aqarSearch) {
         return rangeClosed(1, 1).boxed()
                 .peek(it -> sleep())
                 .flatMap(it -> _forPage(aqarSearch, it))
-                .map(it -> baseUrl + it.select("a").attr("href"));
+                .map(this::getShortUrl);
     }
 
     private Stream<Element> _forPage(AqarSearch aqarSearch, int pageNumber) {
@@ -58,6 +58,8 @@ public class AqarService {
                     .peek(it -> sleep())
                     .filter(this::matchesPrice)
                     .filter(this::hasImage)
+                    .map(this::elementPage)
+                    .filter(Objects::nonNull)
                     .filter(it -> matchesLatitude(aqarSearch, it));
 
         } catch (Exception ex) {
@@ -78,21 +80,32 @@ public class AqarService {
         return !element.select(".adcol-imgs").isEmpty();
     }
 
-    private boolean matchesLatitude(AqarSearch aqarSearch, Element element) {
-        String href = element.select("a").attr("href");
-        try {
-            Document page = Jsoup.connect(baseUrl + href).get();
-            return page.select("tr td a")
-                    .stream()
-                    .filter(it -> it.attr("href").contains("maps.google.com"))
-                    .findFirst()
-                    .map(it -> it.attr("href"))
-                    .map(aqarSearch.getCoordinatesFromUrl())
-                    .map(aqarSearch.getCoordinatesMatcher())
-                    .orElse(false);
+    private boolean matchesLatitude(AqarSearch aqarSearch, Element elementPage) {
+        return elementPage.select("tr td a")
+                .stream()
+                .filter(it -> it.attr("href").contains("maps.google.com"))
+                .findFirst()
+                .map(it -> it.attr("href"))
+                .map(aqarSearch.getCoordinatesFromUrl())
+                .map(aqarSearch.getCoordinatesMatcher())
+                .orElse(false);
+    }
 
+    private String getShortUrl(Element elementPage){
+        return elementPage.select("tr td a")
+                .stream()
+                .filter(it -> it.attr("href").contains("/ad/"))
+                .map(Element::text)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Element elementPage(Element elementOnListPage) {
+        try {
+            return Jsoup.connect(baseUrl + elementOnListPage.select("a").attr("href")).get();
         } catch (IOException e) {
-            return false;
+            System.err.println(e.getMessage());
+            return null;
         }
     }
 

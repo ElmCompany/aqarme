@@ -1,7 +1,5 @@
 package aqar;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -25,17 +23,15 @@ public class MessengerService {
 
     public MessengerService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
     }
 
     public void send(String recipient, String str) {
 
         String message = String.format(MESSAGE, recipient, str);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<String> entity = new HttpEntity<String>(message, headers);
+        HttpEntity<String> entity = new HttpEntity<>(message, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
         System.out.println(response);
     }
