@@ -42,11 +42,14 @@ public class AqarService {
     public Stream<String> run() {
         return aqarSearchList
                 .stream()
+                .parallel()
                 .flatMap(this::_run);
     }
 
     private Stream<String> _run(AqarSearch aqarSearch) {
-        return rangeClosed(1, toalPageNum).boxed()
+        return rangeClosed(1, toalPageNum)
+                .parallel()
+                .boxed()
                 .peek(it -> sleep())
                 .flatMap(it -> _forPage(aqarSearch, it))
                 .map(this::getShortUrl);
@@ -54,20 +57,18 @@ public class AqarService {
 
     private Stream<Element> _forPage(AqarSearch aqarSearch, int pageNumber) {
         try {
-            System.out.println(aqarSearch.getSearchUrl());
-            Document doc = Jsoup
-                    .connect(aqarSearch.getSearchUrl() + pageNumber)
-                    .get();
+            String currentPageUrl = aqarSearch.getSearchUrl() + pageNumber;
+            System.out.println("processing " + currentPageUrl);
+            Document doc = Jsoup.connect(currentPageUrl).get();
 
-            Elements list = doc.select(".list-single-adcol");
-
-            return list.stream()
+            Elements aprtList = doc.select(".list-single-adcol");
+            return aprtList.stream()
                     .parallel()
                     .filter(this::notProcessed)
                     .peek(it -> sleep())
                     .filter(this::matchesPrice)
                     .filter(this::hasImage)
-                    .map(this::elementPage)
+                    .map(this::detailsPage)
                     .filter(Objects::nonNull)
                     .filter(it -> matchesCoordinates(aqarSearch, it));
 
@@ -83,7 +84,7 @@ public class AqarService {
             System.out.printf("Ad with id %s is already processed\n", addNumber);
             return false;
         } else {
-            System.out.printf("start process Ad: %s\n", addNumber);
+            System.out.printf("start processing Ad: %s\n", addNumber);
             ProcessedAds ads = new ProcessedAds(addNumber);
             adsRepository.save(ads);
             return true;
@@ -113,8 +114,8 @@ public class AqarService {
                 .orElse(false);
     }
 
-    private String getShortUrl(Element elementPage) {
-        return elementPage.select("tr td a")
+    private String getShortUrl(Element detailsPage) {
+        return detailsPage.select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("/ad/"))
                 .map(Element::text)
@@ -122,9 +123,9 @@ public class AqarService {
                 .orElse(null);
     }
 
-    private Element elementPage(Element elementOnListPage) {
+    private Element detailsPage(Element listPage) {
         try {
-            return Jsoup.connect(baseUrl + elementOnListPage.select("a").attr("href")).get();
+            return Jsoup.connect(baseUrl + listPage.select("a").attr("href")).get();
         } catch (IOException e) {
             System.err.println(e.getMessage());
             return null;
