@@ -1,5 +1,7 @@
 package aqar;
 
+import aqar.db.ProcessedAds;
+import aqar.db.ProcessedAdsRepository;
 import aqar.search.AqarSearch;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -28,9 +30,11 @@ public class AqarService {
     private int toalPageNum;
 
     private List<AqarSearch> aqarSearchList;
+    private ProcessedAdsRepository adsRepository;
 
-    public AqarService(List<AqarSearch> aqarSearch) {
-        this.aqarSearchList = aqarSearch;
+    public AqarService(List<AqarSearch> aqarSearchList, ProcessedAdsRepository adsRepository) {
+        this.aqarSearchList = aqarSearchList;
+        this.adsRepository = adsRepository;
     }
 
     public Stream<String> run() {
@@ -58,6 +62,7 @@ public class AqarService {
             return list.stream()
                     .parallel()
                     .peek(it -> sleep())
+                    .filter(this::notYetProcessed)
                     .filter(this::matchesPrice)
                     .filter(this::hasImage)
                     .map(this::elementPage)
@@ -68,6 +73,17 @@ public class AqarService {
             System.err.println(ex.getMessage());
         }
         return Stream.empty();
+    }
+
+    private boolean notYetProcessed(Element element) {
+        String addNumber = element.id().replaceAll("[^\\d.]", "");
+        if (adsRepository.addNumberExists(addNumber)){
+            return false;
+        }else{
+            ProcessedAds ads = new ProcessedAds(addNumber);
+            adsRepository.save(ads);
+            return true;
+        }
     }
 
     private boolean matchesPrice(Element element) {

@@ -20,7 +20,7 @@ public class Scheduler {
     }
 
 //    @Scheduled(cron = "0 0 10 * * *", zone = "GMT")       // run every day at 10 AM
-//    @Scheduled(fixedRate = 1000 * 60 * 60 * RATE)
+    @Scheduled(fixedRate = 1000 * 60 * 60 * RATE)
     public void run() {
         Stream<String> run = aqarService.run();
 

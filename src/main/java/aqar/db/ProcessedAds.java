@@ -6,11 +6,22 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 @Entity
-public class Settings {
+public class ProcessedAds {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String latestAd;
+    private String adNumber;
+
+    public ProcessedAds() {
+    }
+
+    public ProcessedAds(String adNumber) {
+        this.adNumber = adNumber;
+    }
+
+    public String getAdNumber() {
+        return adNumber;
+    }
 }
