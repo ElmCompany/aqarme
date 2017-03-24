@@ -43,7 +43,7 @@ public class AqarService {
                 .flatMap(this::_run);
     }
 
-    public Stream<String> _run(AqarSearch aqarSearch) {
+    private Stream<String> _run(AqarSearch aqarSearch) {
         return rangeClosed(1, toalPageNum).boxed()
                 .peek(it -> sleep())
                 .flatMap(it -> _forPage(aqarSearch, it))
