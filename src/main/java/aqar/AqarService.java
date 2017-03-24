@@ -69,7 +69,7 @@ public class AqarService {
                     .filter(this::hasImage)
                     .map(this::elementPage)
                     .filter(Objects::nonNull)
-                    .filter(it -> matchesLatitude(aqarSearch, it));
+                    .filter(it -> matchesCoordinates(aqarSearch, it));
 
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
@@ -102,7 +102,7 @@ public class AqarService {
         return !element.select(".adcol-imgs").isEmpty();
     }
 
-    private boolean matchesLatitude(AqarSearch aqarSearch, Element elementPage) {
+    private boolean matchesCoordinates(AqarSearch aqarSearch, Element elementPage) {
         return elementPage.select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("maps.google.com"))
