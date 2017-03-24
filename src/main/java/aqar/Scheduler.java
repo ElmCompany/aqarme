@@ -5,12 +5,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 @Component
 public class Scheduler {
 
-    private final static int RATE = 3;
+    private final static int HOUR = 1000 * 60 * 60;
+
+    private final static int RATE = 6;
     @Value("${aqar.messenger.senderList}")
     private String[] senderList;
 
@@ -22,8 +25,7 @@ public class Scheduler {
         this.messengerService = messengerService;
     }
 
-    //    @Scheduled(cron = "0 0 10 * * *", zone = "GMT")       // run every day at 10 AM
-    @Scheduled(fixedRate = 1000 * 60 * 60 * RATE)
+    @Scheduled(fixedRate = HOUR * RATE)
     public void run() {
 
         System.out.println(" *********JOB STARTED *********");
@@ -31,7 +33,8 @@ public class Scheduler {
         Stream<String> run = aqarService.run();
         long count = run.peek(url -> {
             if (senderList != null && senderList.length > 0) {
-                System.out.printf("found match url to the criteria %s ...sending via fb Messenger\n", url);
+                System.out.printf("found match url to the criteria %s" +
+                        " ...sending via fb Messenger to %s\n", url, Arrays.toString(senderList));
                 Stream.of(senderList).forEach(it -> messengerService.send(it, url));
             } else {
                 System.out.printf("found match url to the criteria %s\n", url);
