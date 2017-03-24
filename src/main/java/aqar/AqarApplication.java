@@ -4,8 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 @SpringBootApplication
@@ -13,6 +14,9 @@ public class AqarApplication implements CommandLineRunner {
 
     @Autowired
     private AqarService aqarService;
+
+    @Autowired
+    private MessengerService messengerService;
 
     public static void main(String[] args) {
         SpringApplication.run(AqarApplication.class, args);
@@ -23,6 +27,14 @@ public class AqarApplication implements CommandLineRunner {
 
         Stream<String> run = aqarService.run();
 
-        run.forEach(System.out::println);
+        run.forEach(url -> {
+            messengerService.send("966593642012", url);
+            messengerService.send("00201095771359", url);
+        });
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }
