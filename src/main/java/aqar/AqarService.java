@@ -4,6 +4,7 @@ import aqar.db.ProcessedAds;
 import aqar.db.ProcessedAdsRepository;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -78,7 +79,9 @@ public class AqarService {
                     .filter(this::hasElevator)
                     .filter(this::matchesCoordinates);
 
-        } catch (Exception ex) {
+        }catch (HttpStatusException ex) {
+            log.error(ex.getStatusCode() + ", " + ex.getUrl() + ", " + ex.getMessage());
+        }catch (Exception ex) {
             log.error(ex.getMessage());
         }
         return Stream.empty();
