@@ -84,9 +84,9 @@ public class AqarService {
         return Stream.empty();
     }
 
-    private void markAsSuccess(Element element) {
-        if (element.select("kbd").hasText()){
-            adsRepository.markAsSuccess(element.select("kbd").text());
+    private void markAsSuccess(Element pageElement) {
+        if (pageElement.select("kbd").hasText()){
+            adsRepository.markAsSuccess(pageElement.select("kbd").text());
         }
     }
 
