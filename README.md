@@ -16,7 +16,7 @@ aprtList.stream()
     .filter(this::hasImage)             // filter by having image
     .map(this::detailsPage)             // get the details page of the ad
     .filter(this::hasElevator)          // check to has elavator
-    .filter(this::matchesCoordinates);  // and finally check the lat&long reside inside the polygon of the dresired places
+    .filter(this::matchesCoordinates);  // and finally check the lat&long to be inside the polygon of the dresired places
 ```
 
 And then the matched result is sent to me via facebook messagener using [Send API](https://developers.facebook.com/docs/messenger-platform/send-api-reference).
