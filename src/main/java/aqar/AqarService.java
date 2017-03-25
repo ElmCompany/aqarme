@@ -2,7 +2,7 @@ package aqar;
 
 import aqar.db.ProcessedAds;
 import aqar.db.ProcessedAdsRepository;
-import aqar.search.AqarSearch;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -12,8 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import static java.util.stream.IntStream.rangeClosed;
@@ -22,46 +20,53 @@ import static java.util.stream.IntStream.rangeClosed;
 @Service
 public class AqarService {
 
+    private static final String LOC = "loc:";
+    private static final String PLUS = "+";
+
     @Value("${aqar.base.url}")
     private String baseUrl;
+
+    @Value("${aqar.search.url}")
+    private String searchUrl;
+
     @Value("${aqar.max.price}")
     private int maxPrice;
+
     @Value("${aqar.num.pages}")
     private int toalPageNum;
+
     @Value("${aqar.sleepMillis}")
     private long sleepMillis;
 
-    private List<AqarSearch> aqarSearchList;
+    @Value("${aqar.words.elevator}")
+    private CharSequence elevatorWord;
+
+    @Value("${aqar.map.boundaries}")
+    private String[] boundaries;
+
     private ProcessedAdsRepository adsRepository;
 
-    public AqarService(List<AqarSearch> aqarSearchList, ProcessedAdsRepository adsRepository) {
-        this.aqarSearchList = aqarSearchList;
+    public AqarService(ProcessedAdsRepository adsRepository) {
         this.adsRepository = adsRepository;
     }
 
-    public Stream<String> run() {
-        return aqarSearchList
-                .stream()
-                .parallel()
-                .flatMap(this::_run);
-    }
-
-    private Stream<String> _run(AqarSearch aqarSearch) {
+    Stream<String> run() {
         return rangeClosed(1, toalPageNum)
                 .parallel()
                 .boxed()
                 .peek(it -> sleep())
-                .flatMap(it -> _forPage(aqarSearch, it))
-                .map(this::getShortUrlWithTitle);
+                .flatMap(this::forPage)
+                .map(this::shortUrlWithTitle);
     }
 
-    private Stream<Element> _forPage(AqarSearch aqarSearch, int pageNumber) {
+    private Stream<Element> forPage(int pageNumber) {
         try {
-            String currentPageUrl = aqarSearch.getSearchUrl() + pageNumber;
-            System.out.println("processing " + currentPageUrl);
+            String currentPageUrl = baseUrl + searchUrl + pageNumber;
+            log.info("processing " + currentPageUrl);
             Document doc = Jsoup.connect(currentPageUrl).get();
 
             Elements aprtList = doc.select(".list-single-adcol");
+
             return aprtList.stream()
                     .parallel()
                     .filter(this::notProcessed)
@@ -69,22 +74,32 @@ public class AqarService {
                     .filter(this::matchesPrice)
                     .filter(this::hasImage)
                     .map(this::detailsPage)
-                    .filter(Objects::nonNull)
-                    .filter(it -> matchesCoordinates(aqarSearch, it));
+                    .filter(this::hasElevator)
+                    .filter(this::matchesCoordinates);
 
         } catch (Exception ex) {
-            System.err.println(ex.getMessage());
+            log.error(ex.getMessage());
         }
         return Stream.empty();
+    }
+
+    private String shortUrlWithTitle(Element detailsPage) {
+        String title = detailsPage.select(".title h3 a").text();
+        return detailsPage.select("tr td a")
+                .stream()
+                .filter(it -> it.attr("href").contains("/ad/"))
+                .map((element) -> title + " " + "https://" + element.text())
+                .findFirst()
+                .orElse(null);
     }
 
     private boolean notProcessed(Element element) {
         String addNumber = element.id().replaceAll("[^\\d.]", "");
         if (adsRepository.addNumberExists(addNumber)) {
-            System.out.printf("Ad with id %s is already processed\n", addNumber);
+            log.info("Ad with id {} is already processed", addNumber);
             return false;
         } else {
-            System.out.printf("start processing Ad: %s\n", addNumber);
+            log.info("start processing Ad: {}", addNumber);
             ProcessedAds ads = new ProcessedAds(addNumber);
             adsRepository.save(ads);
             return true;
@@ -103,34 +118,41 @@ public class AqarService {
         return !element.select(".adcol-imgs").isEmpty();
     }
 
-    private boolean matchesCoordinates(AqarSearch aqarSearch, Element elementPage) {
+    private boolean hasElevator(Element elementPage) {
+        return elementPage.text().contains(elevatorWord);
+    }
+
+    private boolean matchesCoordinates(Element elementPage) {
         return elementPage.select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("maps.google.com"))
                 .findFirst()
                 .map(it -> it.attr("href"))
-                .map(aqarSearch.getCoordinatesFromUrl())
-                .map(aqarSearch.getCoordinatesMatcher())
+                .map(this::location)
+                .map(this::insideBoundaries)
                 .orElse(false);
-    }
-
-    private String getShortUrlWithTitle(Element detailsPage) {
-        String title =  detailsPage.select(".title h3 a").text();
-        return detailsPage.select("tr td a")
-                .stream()
-                .filter(it -> it.attr("href").contains("/ad/"))
-                .map((element) -> title + " " +"https://" + element.text())
-                .findFirst()
-                .orElse(null);
     }
 
     private Element detailsPage(Element listPage) {
         try {
             return Jsoup.connect(baseUrl + listPage.select("a").attr("href")).get();
         } catch (IOException e) {
-            System.err.println(e.getMessage());
-            return null;
+            log.error(e.getMessage());
+            return new Element("dummy");
         }
+    }
+
+    private Location location(String url) {
+        Location loc = new Location();
+        loc.latitude = Double.parseDouble(url.substring(url.indexOf(LOC) + LOC.length(), url.indexOf(PLUS)));
+        loc.longitude = Double.parseDouble(url.substring(url.indexOf(PLUS) + PLUS.length()));
+        return loc;
+    }
+
+    private boolean insideBoundaries(Location loc) {
+        return Stream.of(boundaries)
+                .map(Rectangle::new)
+                .allMatch(it -> it.contains(loc));
     }
 
     private void sleep() {
@@ -138,6 +160,32 @@ public class AqarService {
             Thread.sleep(sleepMillis);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    @ToString
+    private static class Location {
+        double latitude, longitude;
+    }
+
+    @ToString
+    private static class Rectangle {
+
+        double left, bottom, right, top;
+
+        Rectangle(String boundaries) {
+            String[] split = boundaries.split(";");
+            this.left = Double.parseDouble(split[0]);
+            this.bottom = Double.parseDouble(split[1]);
+            this.right = Double.parseDouble(split[2]);
+            this.top = Double.parseDouble(split[3]);
+        }
+
+        boolean contains(Location loc) {
+            boolean ret = loc.longitude >= this.left && loc.longitude <= this.right
+                    && loc.latitude >= this.bottom && loc.latitude <= this.top;
+            log.debug("comparing loc {} against: {} => {}", loc, this, ret);
+            return ret;
         }
     }
 }

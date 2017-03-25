@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+@Slf4j
 @Component
 public class Scheduler {
 
@@ -28,20 +29,20 @@ public class Scheduler {
     @Scheduled(fixedRate = HOUR * RATE)
     public void run() {
 
-        System.out.println(" *********JOB STARTED *********");
+        log.info(" *********JOB STARTED *********");
 
         Stream<String> run = aqarService.run();
         long count = run.peek(url -> {
             if (senderList != null && senderList.length > 0) {
-                System.out.printf("found match url to the criteria %s" +
-                        " ...sending via fb Messenger to %s\n", url, Arrays.toString(senderList));
+                log.info("found match url to the criteria {} ...sending via fb Messenger to {}",
+                        url, Arrays.toString(senderList));
                 Stream.of(senderList).forEach(it -> messengerService.send(it, url));
             } else {
-                System.out.printf("found match url to the criteria %s\n", url);
+                log.info("found match url to the criteria {}", url);
             }
         }).count();
 
-        System.out.println(" *********JOB END ********* \n Num of items match = " + count);
+        log.info(" *********JOB END ********* \n Num of items match = " + count);
     }
 
 }

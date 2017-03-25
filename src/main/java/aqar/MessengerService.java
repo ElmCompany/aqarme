@@ -1,13 +1,12 @@
 package aqar;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriUtils;
 
-import java.io.UnsupportedEncodingException;
-
+@Slf4j
 @Service
 public class MessengerService {
 
@@ -31,9 +30,9 @@ public class MessengerService {
         ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
 
         if (response.getStatusCode() != HttpStatus.OK){
-            System.out.println(response);
+            log.error(response.toString());
         }else{
-            System.err.printf("Ad: %s, response: %s\n", str, response.getStatusCode());
+            log.info("Ad: {}, response: {}", str, response.getStatusCode());
         }
     }
 }
