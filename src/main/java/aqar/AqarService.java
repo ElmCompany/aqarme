@@ -167,7 +167,7 @@ public class AqarService {
     }
 
     private void createPolygonIfRequired() {
-        if (polygonOnMap == null) { // this not achieve double check idom, but it is okay in my case insread of lock the entire method
+        if (polygonOnMap == null) { // this doesn't achieve double check idom, but it is okay in my case instead of lock the entire method
             synchronized (this){
                 Polygon.Builder builder = Polygon.Builder();
                 Stream.of(vertexes)
