@@ -132,7 +132,7 @@ public class AqarService {
     }
 
     private boolean hasElevator(Element elementPage) {
-        return elementPage.text().contains(elevatorWord);
+        return elementPage.select(".single-adcolum").text().contains(elevatorWord);
     }
 
     private boolean matchesCoordinates(Element elementPage) {
