@@ -60,12 +60,6 @@ public class AqarService {
                 .map(this::shortUrlWithTitle);
     }
 
-    private void markAsSuccess(Element element) {
-        if (element.select("kbd").hasText()){
-            adsRepository.markAsSuccess(element.select("kbd").text());
-        }
-    }
-
     private Stream<Element> forPage(int pageNumber) {
         try {
             String currentPageUrl = baseUrl + searchUrl + pageNumber;
@@ -88,6 +82,12 @@ public class AqarService {
             log.error(ex.getMessage());
         }
         return Stream.empty();
+    }
+
+    private void markAsSuccess(Element element) {
+        if (element.select("kbd").hasText()){
+            adsRepository.markAsSuccess(element.select("kbd").text());
+        }
     }
 
     private String shortUrlWithTitle(Element detailsPage) {
