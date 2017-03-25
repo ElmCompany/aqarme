@@ -56,7 +56,6 @@ public class AqarService {
 
     Stream<String> run() {
         return rangeClosed(1, toalPageNum)
-//                .parallel()
                 .boxed()
                 .peek(it -> sleep())
                 .flatMap(this::forPage)
@@ -73,7 +72,6 @@ public class AqarService {
             Elements aprtList = doc.select(".list-single-adcol");
 
             return aprtList.stream()
-//                    .parallel()
                     .filter(this::notProcessed)
                     .peek(it -> sleep())
                     .filter(this::matchesPrice)
