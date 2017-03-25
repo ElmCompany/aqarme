@@ -9,16 +9,14 @@ The list of criteria now includes, price, geo location, and has Images.
 The main action is here:
 
 ```java
-return list.stream()
-	    .parallel()
-	    .peek(it -> sleep())
-	    .filter(this::notProcessed) // skipped already processed items
-	    .filter(this::matchesPrice) // filter by price
-	    .filter(this::hasImage)     // filter by image
-	    .map(this::elementPage)
-	    .filter(Objects::nonNull)
-	    .filter(it -> matchesCoordinates(aqarSearch, it));  // and filter by certain cooridnates
-
+aprtList.stream()
+    .filter(this::notProcessed)         // skipped already processed items
+    .peek(it -> sleep())                // sleep 5 seconds so not be blocked
+    .filter(this::matchesPrice)         // filter by price
+    .filter(this::hasImage)             // filter by having image
+    .map(this::detailsPage)             // get the details page of the ad
+    .filter(this::hasElevator)          // check to has elavator
+    .filter(this::matchesCoordinates);  // and finally check the lat&long reside inside the polygon of the dresired places
 ```
 
 And then the matched result is sent to me via facebook messagener using [Send API](https://developers.facebook.com/docs/messenger-platform/send-api-reference).
