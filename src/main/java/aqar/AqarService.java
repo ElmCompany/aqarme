@@ -2,7 +2,8 @@ package aqar;
 
 import aqar.db.ProcessedAds;
 import aqar.db.ProcessedAdsRepository;
-import lombok.ToString;
+import com.sromku.polygon.Point;
+import com.sromku.polygon.Polygon;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -42,8 +43,10 @@ public class AqarService {
     @Value("${aqar.words.elevator}")
     private CharSequence elevatorWord;
 
-    @Value("${aqar.map.boundaries}")
-    private String[] boundaries;
+    @Value("${aqar.map.polygon.vertexes}")
+    private String[] vertexes;
+
+    private Polygon polygonOnMap;
 
     private ProcessedAdsRepository adsRepository;
 
@@ -79,16 +82,16 @@ public class AqarService {
                     .filter(this::hasElevator)
                     .filter(this::matchesCoordinates);
 
-        }catch (HttpStatusException ex) {
+        } catch (HttpStatusException ex) {
             log.error(ex.getStatusCode() + ", " + ex.getUrl() + ", " + ex.getMessage());
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             log.error(ex.getMessage());
         }
         return Stream.empty();
     }
 
     private void markAsSuccess(Element pageElement) {
-        if (pageElement.select("kbd").hasText()){
+        if (pageElement.select("kbd").hasText()) {
             adsRepository.markAsSuccess(pageElement.select("kbd").text());
         }
     }
@@ -138,8 +141,8 @@ public class AqarService {
                 .filter(it -> it.attr("href").contains("maps.google.com"))
                 .findFirst()
                 .map(it -> it.attr("href"))
-                .map(this::location)
-                .map(this::insideBoundaries)
+                .map(this::toPoint)
+                .map(this::insidePolygon)
                 .orElse(false);
     }
 
@@ -152,17 +155,32 @@ public class AqarService {
         }
     }
 
-    private Location location(String url) {
-        Location loc = new Location();
-        loc.latitude = Double.parseDouble(url.substring(url.indexOf(LOC) + LOC.length(), url.indexOf(PLUS)));
-        loc.longitude = Double.parseDouble(url.substring(url.indexOf(PLUS) + PLUS.length()));
-        return loc;
+    private Point toPoint(String url) {
+        float latitude = Float.parseFloat(url.substring(url.indexOf(LOC) + LOC.length(), url.indexOf(PLUS)));
+        float longitude = Float.parseFloat(url.substring(url.indexOf(PLUS) + PLUS.length()));
+        return new Point(latitude, longitude);
     }
 
-    private boolean insideBoundaries(Location loc) {
-        return Stream.of(boundaries)
-                .map(Rectangle::new)
-                .anyMatch(it -> it.contains(loc));
+    private boolean insidePolygon(Point point) {
+        createPolygonIfRequired();
+        return polygonOnMap.contains(point);
+    }
+
+    private void createPolygonIfRequired() {
+        if (polygonOnMap == null) { // this not achieve double check idom, but it is okay in my case insread of lock the entire method
+            synchronized (this){
+                Polygon.Builder builder = Polygon.Builder();
+                Stream.of(vertexes)
+                        .map(this::newPoint)
+                        .forEach(builder::addVertex);
+                this.polygonOnMap = builder.build();
+            }
+        }
+    }
+
+    private Point newPoint(String coordinates) {
+        String[] v = coordinates.split(";");
+        return new Point(Float.parseFloat(v[0]), Float.parseFloat(v[1]));
     }
 
     private void sleep() {
@@ -170,32 +188,6 @@ public class AqarService {
             Thread.sleep(sleepMillis);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
-    }
-
-    @ToString
-    private static class Location {
-        double latitude, longitude;
-    }
-
-    @ToString
-    private static class Rectangle {
-
-        double left, bottom, right, top;
-
-        Rectangle(String boundaries) {
-            String[] split = boundaries.split(";");
-            this.left = Double.parseDouble(split[0]);
-            this.bottom = Double.parseDouble(split[1]);
-            this.right = Double.parseDouble(split[2]);
-            this.top = Double.parseDouble(split[3]);
-        }
-
-        boolean contains(Location loc) {
-            boolean ret = loc.longitude >= this.left && loc.longitude <= this.right
-                    && loc.latitude >= this.bottom && loc.latitude <= this.top;
-            log.debug("comparing loc {} against: {} => {}", loc, this, ret);
-            return ret;
         }
     }
 }
