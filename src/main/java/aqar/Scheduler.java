@@ -13,8 +13,8 @@ import java.util.stream.Stream;
 public class Scheduler {
 
     private final static int HOUR = 1000 * 60 * 60;
-
     private final static int RATE = 6;
+
     @Value("${aqar.messenger.senderList}")
     private String[] senderList;
 

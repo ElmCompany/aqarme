@@ -38,7 +38,7 @@ public class AqarService {
     private int minPrice;
 
     @Value("${aqar.num.pages}")
-    private int toalPageNum;
+    private int totalPageNum;
 
     @Value("${aqar.sleepMillis}")
     private long sleepMillis;
@@ -61,7 +61,7 @@ public class AqarService {
     }
 
     Stream<String> run() {
-        return rangeClosed(1, toalPageNum)
+        return rangeClosed(1, totalPageNum)
                 .boxed()
                 .peek(it -> sleep())
                 .flatMap(this::getMatched)
