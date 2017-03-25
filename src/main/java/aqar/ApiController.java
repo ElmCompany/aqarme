@@ -1,6 +1,7 @@
 package aqar;
 
 import aqar.db.ProcessedAdsRepository;
+import lombok.Getter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,14 @@ public class ApiController {
 
     @GetMapping
     public ResponseEntity<?> listProcessedAds() {
-        return ok(adsRepository.findAll());
+        Stats stats = new Stats();
+        stats.allCount = adsRepository.count();
+        stats.successCount = adsRepository.countBySuccessIsTrue();
+        return ok(stats);
+    }
+
+    @Getter
+    static class Stats{
+        long allCount, successCount;
     }
 }

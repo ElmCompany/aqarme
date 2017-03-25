@@ -15,10 +15,10 @@ import javax.sql.DataSource;
 @EnableAsync
 @EnableScheduling
 @SpringBootApplication
-public class AqarApplication {
+public class Application {
 
     public static void main(String[] args) {
-        SpringApplication.run(AqarApplication.class, args);
+        SpringApplication.run(Application.class, args);
     }
 
     @Bean

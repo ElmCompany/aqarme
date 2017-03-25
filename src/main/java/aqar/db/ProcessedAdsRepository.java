@@ -18,4 +18,7 @@ public interface ProcessedAdsRepository extends JpaRepository<ProcessedAds, Long
     @Modifying
     @Query("update ProcessedAds set success = true where adNumber = :adNumber")
     void markAsSuccess(@Param("adNumber") String kbd);
+
+
+    long countBySuccessIsTrue();
 }
