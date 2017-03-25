@@ -34,6 +34,9 @@ public class AqarService {
     @Value("${aqar.max.price}")
     private int maxPrice;
 
+    @Value("${aqar.min.price}")
+    private int minPrice;
+
     @Value("${aqar.num.pages}")
     private int toalPageNum;
 
@@ -119,7 +122,8 @@ public class AqarService {
 
     private boolean matchesPrice(Element element) {
         try {
-            return Integer.parseInt(element.select(".price").text().replaceAll("[^\\d.]", "")) <= maxPrice;
+            int price = Integer.parseInt(element.select(".price").text().replaceAll("[^\\d.]", ""));
+            return price <= maxPrice && price >= minPrice ;
         } catch (Exception ignored) {
             return false;
         }
