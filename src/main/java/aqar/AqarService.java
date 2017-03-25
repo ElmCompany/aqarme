@@ -56,7 +56,14 @@ public class AqarService {
                 .boxed()
                 .peek(it -> sleep())
                 .flatMap(this::forPage)
+                .peek(this::markAsSuccess)
                 .map(this::shortUrlWithTitle);
+    }
+
+    private void markAsSuccess(Element element) {
+        if (element.select("kbd").hasText()){
+            adsRepository.markAsSuccess(element.select("kbd").text());
+        }
     }
 
     private Stream<Element> forPage(int pageNumber) {
@@ -152,7 +159,7 @@ public class AqarService {
     private boolean insideBoundaries(Location loc) {
         return Stream.of(boundaries)
                 .map(Rectangle::new)
-                .allMatch(it -> it.contains(loc));
+                .anyMatch(it -> it.contains(loc));
     }
 
     private void sleep() {

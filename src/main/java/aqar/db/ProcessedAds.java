@@ -14,14 +14,12 @@ public class ProcessedAds {
 
     private String adNumber;
 
+    private Boolean success;
+
     public ProcessedAds() {
     }
 
     public ProcessedAds(String adNumber) {
         this.adNumber = adNumber;
-    }
-
-    public String getAdNumber() {
-        return adNumber;
     }
 }
