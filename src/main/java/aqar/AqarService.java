@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.stream.Stream;
 
+import static java.lang.Integer.parseInt;
 import static java.util.stream.IntStream.rangeClosed;
 
 @Slf4j
@@ -44,12 +45,15 @@ public class AqarService {
     private long sleepMillis;
 
     @Value("${aqar.words.elevator}")
-    private CharSequence elevatorWord;
+    private String elevatorWord;
+
+    @Value("${aqar.words.sleep}")
+    private String sleepWord;
 
     @Value("${aqar.map.polygon.vertexes}")
     private String[] vertexes;
 
-    private Polygon polygonOnMap;
+    private Polygon cachedPolygon;
 
     private ProcessedAdsRepository adsRepository;
 
@@ -61,18 +65,17 @@ public class AqarService {
         return rangeClosed(1, toalPageNum)
                 .boxed()
                 .peek(it -> sleep())
-                .flatMap(this::forPage)
+                .flatMap(this::getMatched)
                 .peek(this::markAsSuccess)
                 .map(this::shortUrlWithTitle);
     }
 
-    private Stream<Element> forPage(int pageNumber) {
+    private Stream<Element> getMatched(int pageNumber) {
         try {
             String currentPageUrl = baseUrl + searchUrl + pageNumber;
             log.info("processing " + currentPageUrl);
-            Document doc = Jsoup.connect(currentPageUrl).get();
 
-            Elements aprtList = doc.select(".list-single-adcol");
+            Elements aprtList = Jsoup.connect(currentPageUrl).get().select(".list-single-adcol");
 
             return aprtList.stream()
                     .filter(this::notProcessed)
@@ -81,7 +84,8 @@ public class AqarService {
                     .filter(this::hasImage)
                     .map(this::detailsPage)
                     .filter(this::hasElevator)
-                    .filter(this::matchesCoordinates);
+                    .filter(this::hasMoreThanOneRoom)
+                    .filter(this::locatedInsidePolygon);
 
         } catch (HttpStatusException ex) {
             log.error(ex.getStatusCode() + ", " + ex.getUrl() + ", " + ex.getMessage());
@@ -108,7 +112,7 @@ public class AqarService {
     }
 
     private boolean notProcessed(Element element) {
-        String addNumber = element.id().replaceAll("[^\\d.]", "");
+        String addNumber = extractNumber(element.id());
         if (adsRepository.addNumberExists(addNumber)) {
             log.info("Ad with id {} is already processed", addNumber);
             return false;
@@ -122,7 +126,7 @@ public class AqarService {
 
     private boolean matchesPrice(Element element) {
         try {
-            int price = Integer.parseInt(element.select(".price").text().replaceAll("[^\\d.]", ""));
+            int price = parseInt(extractNumber(element.select(".price").text()));
             return price <= maxPrice && price >= minPrice ;
         } catch (Exception ignored) {
             return false;
@@ -133,11 +137,16 @@ public class AqarService {
         return !element.select(".adcol-imgs").isEmpty();
     }
 
+    private boolean hasMoreThanOneRoom(Element pageElement) {
+        String rooms = pageElement.select(".small-12 table").last().getElementsContainingOwnText(sleepWord).text();
+        return !rooms.contains("1");
+    }
+
     private boolean hasElevator(Element elementPage) {
         return elementPage.select(".single-adcolum").text().contains(elevatorWord);
     }
 
-    private boolean matchesCoordinates(Element elementPage) {
+    private boolean locatedInsidePolygon(Element elementPage) {
         return elementPage.select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("maps.google.com"))
@@ -165,17 +174,17 @@ public class AqarService {
 
     private boolean insidePolygon(Point point) {
         createPolygonIfRequired();
-        return polygonOnMap.contains(point);
+        return cachedPolygon.contains(point);
     }
 
     private void createPolygonIfRequired() {
-        if (polygonOnMap == null) { // this doesn't achieve double check idom, but it is okay in my case instead of lock the entire method
+        if (cachedPolygon == null) { // this doesn't achieve double check idom, but it is okay in my case instead of lock the entire method
             synchronized (this){
                 Polygon.Builder builder = Polygon.Builder();
                 Stream.of(vertexes)
                         .map(this::newPoint)
                         .forEach(builder::addVertex);
-                this.polygonOnMap = builder.build();
+                this.cachedPolygon = builder.build();
             }
         }
     }
@@ -191,5 +200,9 @@ public class AqarService {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private String extractNumber(String text){
+        return text.replaceAll("[^\\d.]", "");
     }
 }
