@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import static org.springframework.http.ResponseEntity.ok;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api")
 public class ApiController {
 
     private ProcessedAdsRepository adsRepository;
@@ -19,7 +19,7 @@ public class ApiController {
         this.adsRepository = adsRepository;
     }
 
-    @GetMapping
+    @GetMapping("/stats")
     public ResponseEntity<?> listProcessedAds() {
         Stats stats = new Stats();
         stats.allCount = adsRepository.count();
