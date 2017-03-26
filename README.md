@@ -21,3 +21,8 @@ aprtList.stream()
 ```
 
 And then the matched result is sent to me via facebook messagener using [Send API](https://developers.facebook.com/docs/messenger-platform/send-api-reference).
+
+The `insideSelectedArea()` checks the coordinates according to the selected area on maps like the following one:
+<p align="center">
+<img src="https://github.com/mhewedy/aqarme/raw/master/src/main/resources/polygon.png" width="500">
+</p>
