@@ -15,9 +15,9 @@ aprtList.stream()
 	.filter(this::matchesPrice)         // filter by price
 	.filter(this::hasImage)             // filter by having image
 	.map(this::detailsPage)             // get the details page of the advertise
+	.filter(this::insideSelectedArea)   // check the lat&long to be inside the selected area on map
 	.filter(this::hasElevator)          // check to has elavator
 	.filter(this::hasMoreThanOneRoom)   // check to has more than 1 room
-	.filter(this::insideSelectedArea)   // check the lat&long to be inside the selected area on map
 ```
 
 And then the matched result is sent to me via facebook messagener using [Send API](https://developers.facebook.com/docs/messenger-platform/send-api-reference).
