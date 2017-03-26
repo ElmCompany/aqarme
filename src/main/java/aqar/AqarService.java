@@ -84,7 +84,7 @@ public class AqarService {
                     .map(this::detailsPage)
                     .filter(this::hasElevator)
                     .filter(this::hasMoreThanOneRoom)
-                    .filter(this::locatedInsidePolygon);
+                    .filter(this::insideSelectedArea);
 
         } catch (HttpStatusException ex) {
             log.error(ex.getStatusCode() + ", " + ex.getUrl() + ", " + ex.getMessage());
@@ -145,7 +145,7 @@ public class AqarService {
         return elementPage.select(".single-adcolum").text().contains(elevatorWord);
     }
 
-    private boolean locatedInsidePolygon(Element elementPage) {
+    private boolean insideSelectedArea(Element elementPage) {
         return elementPage.select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("maps.google.com"))
