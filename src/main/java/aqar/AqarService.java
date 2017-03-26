@@ -82,9 +82,9 @@ public class AqarService {
                     .filter(this::matchesPrice)
                     .filter(this::hasImage)
                     .map(this::detailsPage)
+                    .filter(this::insideSelectedArea)
                     .filter(this::hasElevator)
-                    .filter(this::hasMoreThanOneRoom)
-                    .filter(this::insideSelectedArea);
+                    .filter(this::hasMoreThanOneRoom);
 
         } catch (HttpStatusException ex) {
             log.error(ex.getStatusCode() + ", " + ex.getUrl() + ", " + ex.getMessage());
