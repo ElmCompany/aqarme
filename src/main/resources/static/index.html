@@ -45,7 +45,7 @@
     <script type="text/javascript">
       var drawingManager;
       var selectedShape;
-      var colors = ['#1E90FF', '#FF1493', '#32CD32', '#FF8C00', '#4B0082'];
+      var colors = ['#1E90FF'];
       var selectedColor;
       var colorButtons = {};
 
@@ -69,8 +69,9 @@
           pathstr = "[ ";
           for (var i = 0; i < selectedShape.getPath().getLength(); i++) {
             // .toUrlValue(5) limits number of decimals, default is 6 but can do more
-            pathstr += selectedShape.getPath().getAt(i).toUrlValue() + " , ";
+            pathstr += selectedShape.getPath().getAt(i).toUrlValue().replace(",", ";") + ",";
           }
+		  pathstr = pathstr.slice(1, -1)
           pathstr += "]";
         }
         bndstr = "" + selectedShape.getBounds;
@@ -88,7 +89,9 @@
         if (typeof selectedShape.getRadius == 'function') {
           radstr = "" + selectedShape.getRadius();
         }
-        curseldiv.innerHTML = "<b>cursel</b>: " + selectedShape.type + " " + selectedShape + "; <i>pos</i>: " + posstr + " ; <i>path</i>: " + pathstr + " ; <i>bounds</i>: " + bndstr + " ; <i>Cb</i>: " + cntstr + " ; <i>radius</i>: " + radstr + " ; <i>Cr</i>: " + cntrstr ;
+        //curseldiv.innerHTML = "<b>cursel</b>: " + selectedShape.type + " " + selectedShape + "; <i>pos</i>: " + posstr + " ; <i>path</i>: " + pathstr + " ; <i>bounds</i>: " + bndstr + " ; <i>Cb</i>: " + cntstr + " ; <i>radius</i>: " + radstr + " ; <i>Cr</i>: " + cntrstr ;
+		
+		curseldiv.innerHTML = "<b>" + pathstr + "</b>";
       }
 
       function setSelection(shape, isNotMarker) {
@@ -186,7 +189,7 @@
       function initialize() {
         map = new google.maps.Map(document.getElementById('map'), { //var
           zoom: 12,//10,
-          center: new google.maps.LatLng(22.338,114.057),//(22.344, 114.048),
+          center: new google.maps.LatLng(24.702228,46.750634),//(22.344, 114.048),
           mapTypeId: google.maps.MapTypeId.ROADMAP,
           disableDefaultUI: false,
           zoomControl: true
@@ -323,7 +326,7 @@
       </div>
     <div id="curpos"></div>
     <div id="cursel"></div>
-    <div id="note"><small>Note: markers can be selected, but are not graphically indicated; can be deleted, but cannot have their color changed.</small></div>
+    <!-- <div id="note"><small>Note: markers can be selected, but are not graphically indicated; can be deleted, but cannot have their color changed.</small></div> -->
     </div>
     <input id="pac-input" type="text" placeholder="Search Box">
     <div id="map">A</div>
