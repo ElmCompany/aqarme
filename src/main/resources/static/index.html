@@ -71,7 +71,7 @@
             // .toUrlValue(5) limits number of decimals, default is 6 but can do more
             pathstr += selectedShape.getPath().getAt(i).toUrlValue().replace(",", ";") + ",";
           }
-		  pathstr = pathstr.slice(1, -1)
+	 pathstr = pathstr.slice(0, -1)
           pathstr += "]";
         }
         bndstr = "" + selectedShape.getBounds;
@@ -91,7 +91,7 @@
         }
         //curseldiv.innerHTML = "<b>cursel</b>: " + selectedShape.type + " " + selectedShape + "; <i>pos</i>: " + posstr + " ; <i>path</i>: " + pathstr + " ; <i>bounds</i>: " + bndstr + " ; <i>Cb</i>: " + cntstr + " ; <i>radius</i>: " + radstr + " ; <i>Cr</i>: " + cntrstr ;
 		
-		curseldiv.innerHTML = "<b>" + pathstr + "</b>";
+	curseldiv.innerHTML = "<b>" + pathstr + "</b>";
       }
 
       function setSelection(shape, isNotMarker) {
