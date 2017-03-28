@@ -1,4 +1,4 @@
-package aqar.db;
+package aqar.model;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 public interface ProcessedAdsRepository extends JpaRepository<ProcessedAds, Long> {
 
     @Query("select count(o) > 0 from ProcessedAds o where o.adNumber = :adNumber")
-    boolean addNumberExists(@Param("adNumber") String adNumber);
+    boolean adAlreadyProcessed(@Param("adNumber") String adNumber);
 
     @Async
     @Transactional

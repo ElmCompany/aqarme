@@ -1,6 +1,6 @@
 package aqar;
 
-import aqar.db.ProcessedAdsRepository;
+import aqar.model.ProcessedAdsRepository;
 import lombok.Getter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,7 +1,7 @@
 package aqar;
 
-import aqar.db.ProcessedAds;
-import aqar.db.ProcessedAdsRepository;
+import aqar.model.ProcessedAds;
+import aqar.model.ProcessedAdsRepository;
 import com.sromku.polygon.Point;
 import com.sromku.polygon.Polygon;
 import lombok.extern.slf4j.Slf4j;
@@ -112,7 +112,7 @@ public class AqarService {
 
     private boolean notProcessed(Element element) {
         String addNumber = extractNumber(element.id());
-        if (adsRepository.addNumberExists(addNumber)) {
+        if (adsRepository.adAlreadyProcessed(addNumber)) {
             log.info("Ad with id {} is already processed", addNumber);
             return false;
         } else {

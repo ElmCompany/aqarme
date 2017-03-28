@@ -1,4 +1,4 @@
-package aqar.db;
+package aqar.model;
 
 import lombok.Getter;
 
