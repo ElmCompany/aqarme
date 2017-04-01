@@ -20,7 +20,7 @@ public class ApiController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<?> listProcessedAds() {
+    public ResponseEntity<?> stats() {
         Stats stats = new Stats();
         stats.allCount = adsRepository.count();
         stats.successCount = adsRepository.countBySuccessIsTrue();
