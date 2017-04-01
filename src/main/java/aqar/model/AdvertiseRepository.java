@@ -8,16 +8,16 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Transactional;
 
 
-public interface ProcessedAdsRepository extends JpaRepository<ProcessedAds, Long> {
+public interface AdvertiseRepository extends JpaRepository<Advertise, Long> {
 
-    @Query("select count(o) > 0 from ProcessedAds o where o.adNumber = :adNumber")
-    boolean adAlreadyProcessed(@Param("adNumber") String adNumber);
+    @Query("select count(o) > 0 from Advertise o where o.number = :number")
+    boolean alreadyProcessed(@Param("number") String number);
 
     @Async
     @Transactional
     @Modifying
-    @Query("update ProcessedAds set success = true where adNumber = :adNumber")
-    void markAsSuccess(@Param("adNumber") String kbd);
+    @Query("update Advertise set success = true where number = :number")
+    void markAsSuccess(@Param("number") String number);
 
 
     long countBySuccessIsTrue();

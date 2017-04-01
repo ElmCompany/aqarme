@@ -1,7 +1,7 @@
 package aqar;
 
-import aqar.model.ProcessedAds;
-import aqar.model.ProcessedAdsRepository;
+import aqar.model.Advertise;
+import aqar.model.AdvertiseRepository;
 import com.sromku.polygon.Point;
 import com.sromku.polygon.Polygon;
 import lombok.extern.slf4j.Slf4j;
@@ -54,9 +54,9 @@ public class AqarService {
 
     private Polygon cachedPolygon;
 
-    private ProcessedAdsRepository adsRepository;
+    private AdvertiseRepository adsRepository;
 
-    public AqarService(ProcessedAdsRepository adsRepository) {
+    public AqarService(AdvertiseRepository adsRepository) {
         this.adsRepository = adsRepository;
     }
 
@@ -111,13 +111,13 @@ public class AqarService {
     }
 
     private boolean notProcessed(Element element) {
-        String addNumber = extractNumber(element.id());
-        if (adsRepository.adAlreadyProcessed(addNumber)) {
-            log.info("Ad with id {} is already processed", addNumber);
+        String number = extractNumber(element.id());
+        if (adsRepository.alreadyProcessed(number)) {
+            log.info("Ad with id {} is already processed", number);
             return false;
         } else {
-            log.info("start processing Ad: {}", addNumber);
-            ProcessedAds ads = new ProcessedAds(addNumber);
+            log.info("start processing Ad: {}", number);
+            Advertise ads = new Advertise(number, null);
             adsRepository.save(ads);
             return true;
         }

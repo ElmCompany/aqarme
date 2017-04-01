@@ -1,6 +1,6 @@
 package aqar;
 
-import aqar.model.ProcessedAdsRepository;
+import aqar.model.AdvertiseRepository;
 import lombok.Getter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,9 +13,9 @@ import static org.springframework.http.ResponseEntity.ok;
 @RequestMapping("/api")
 public class ApiController {
 
-    private ProcessedAdsRepository adsRepository;
+    private AdvertiseRepository adsRepository;
 
-    public ApiController(ProcessedAdsRepository adsRepository) {
+    public ApiController(AdvertiseRepository adsRepository) {
         this.adsRepository = adsRepository;
     }
 
