@@ -64,6 +64,10 @@ public class JobElement {
         return job;
     }
 
+    public String clientId(){
+        return job.clientId;
+    }
+
     // ----- private helpers
 
     private Point newPoint(String coordinates) {

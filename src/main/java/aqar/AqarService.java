@@ -57,13 +57,20 @@ public class AqarService {
         this.jobRepository = jobRepository;
     }
 
-    Stream<String> run() {
-        return rangeClosed(1, totalPageNum)
-                .boxed()
-                .peek(it -> sleep())
-                .flatMap(this::getMatched)
-                .peek(this::markAsSuccess)
-                .map(this::shortUrlWithTitle);
+    Stream<JobOutput> run() {
+        Long jobsCount = jobRepository.countByActiveIsTrue();
+        log.info("jobs count is : {} ", jobsCount);
+
+        if (jobsCount > 0) {
+            return rangeClosed(1, totalPageNum)
+                    .boxed()
+                    .peek(it -> sleep())
+                    .flatMap(this::getMatched)
+                    .peek(this::markAsSuccess)
+                    .map(this::shortUrlWithTitle);
+        } else {
+            return Stream.empty();
+        }
     }
 
     private Stream<JobElement> getMatched(int pageNumber) {
@@ -102,12 +109,12 @@ public class AqarService {
         }
     }
 
-    private String shortUrlWithTitle(JobElement je) {
+    private JobOutput shortUrlWithTitle(JobElement je) {
         String title = je.element().select(".title h3 a").text();
         return je.element().select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("/ad/"))
-                .map((element) -> title + " " + "https://" + element.text() + " " + je.jobId())
+                .map(it -> new JobOutput("https://" + it.text(), title, je.clientId()))
                 .findFirst()
                 .orElse(null);
     }
