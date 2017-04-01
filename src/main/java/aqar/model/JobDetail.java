@@ -25,6 +25,7 @@ class JobDetail {
     @NotNull
     @Column(nullable = false)
     String vertexes;
+    // comma-separated Strings
 
     @OneToOne(optional = false, mappedBy = "jobDetail")
     private Job job;

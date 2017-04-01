@@ -25,6 +25,8 @@ public class Job {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "job")
     private List<Advertise> advertise;
     private Boolean active = true;
+    @NotNull
+    String senders;
 
     public String clientId() {
         return clientId;

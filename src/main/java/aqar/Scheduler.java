@@ -2,11 +2,9 @@ package aqar;
 
 import aqar.model.JobOutput;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -15,9 +13,6 @@ public class Scheduler {
 
     private final static int HOUR = 1000 * 60 * 60;
     private final static int RATE = 1;
-
-    @Value("${aqar.messenger.senderList}")
-    private String[] senderList;
 
     private AqarService aqarService;
     private MessengerService messengerService;
@@ -32,16 +27,12 @@ public class Scheduler {
 
         log.info(" *********JOB STARTED *********");
 
-        Stream<JobOutput> run = aqarService.run();
-        long count = run.peek(out -> {
-            if (senderList != null && senderList.length > 0) {
-                log.info("found match url to the criteria {} ...sending via fb Messenger to {}",
-                        out, Arrays.toString(senderList));
-                Stream.of(senderList).forEach(it -> messengerService.send(it, out.getUrl()));
-            } else {
-                log.info("found match url to the criteria {}", out.getUrl());
-            }
-        }).count();
+        Stream<JobOutput> output = aqarService.run();
+
+        long count = output.peek(it -> it.getSenders().forEach(it2 -> {
+            log.info("found match url to the criteria {} ...sending via fb Messenger to ", it, it2);
+            messengerService.send(it2, it.getTitle() + " " + it.getUrl());
+        })).count();
 
         log.info(" *********JOB END ********* \n Num of items match = " + count);
     }

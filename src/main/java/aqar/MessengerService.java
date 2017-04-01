@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
-public class MessengerService {
+class MessengerService {
 
     private static final String MESSAGE = "{\"recipient\": {\"phone_number\": \"%s\"},\"message\": {\"text\": \"%s\"}}";
 
@@ -21,7 +21,7 @@ public class MessengerService {
         this.restTemplate = restTemplate;
     }
 
-    public void send(String recipient, String str) {
+    void send(String recipient, String str) {
         String message = String.format(MESSAGE, recipient, str);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON_UTF8);

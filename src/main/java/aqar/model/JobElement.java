@@ -56,16 +56,21 @@ public class JobElement {
         return cachedPolygon;
     }
 
+    public String clientId(){
+        return job.clientId;
+    }
+
+    public Stream<String> senders(){
+        return getFromCSV(job.senders);
+    }
+    // ---------
+
     public Element element() {
         return element;
     }
 
     public Job job() {
         return job;
-    }
-
-    public String clientId(){
-        return job.clientId;
     }
 
     // ----- private helpers

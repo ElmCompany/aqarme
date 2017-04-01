@@ -22,7 +22,7 @@ import static java.util.stream.IntStream.rangeClosed;
 
 @Slf4j
 @Service
-public class AqarService {
+class AqarService {
 
     private static final String LOC = "loc:";
     private static final String PLUS = "+";
@@ -60,7 +60,7 @@ public class AqarService {
     }
 
     Stream<JobOutput> run() {
-        Long jobsCount = jobRepository.countByActiveIsTrue();
+        long jobsCount = jobRepository.count();
         log.info("jobs count is : {} ", jobsCount);
 
         if (jobsCount > 0) {
@@ -81,7 +81,7 @@ public class AqarService {
             log.info("processing " + currentPageUrl);
 
             Elements adsList = Jsoup.connect(currentPageUrl).get().select(".list-single-adcol");
-            List<Job> jobs = jobRepository.findAllByActiveIsTrue();
+            List<Job> jobs = jobRepository.findAll();
 
             log.info("found {} active jobs in db", jobs.size());
 
@@ -116,7 +116,7 @@ public class AqarService {
         return je.element().select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("/ad/"))
-                .map(it -> new JobOutput("https://" + it.text(), title, je.clientId()))
+                .map(it -> new JobOutput("https://" + it.text(), title, je.clientId(), je.senders()))
                 .findFirst()
                 .orElse(null);
     }
