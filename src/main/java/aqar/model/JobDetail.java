@@ -1,7 +1,11 @@
 package aqar.model;
 
-import javax.persistence.*;
+import lombok.Setter;
 
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+
+@Setter
 @Entity
 public class JobDetail {
 
@@ -19,6 +23,7 @@ public class JobDetail {
     String numRooms;
     // comma-separated numbers
     String floorNumber;
+    @NotNull
     @Column(nullable = false)
     String vertexes;
 }
