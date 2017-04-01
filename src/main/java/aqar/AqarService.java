@@ -1,18 +1,18 @@
 package aqar;
 
-import aqar.model.Advertise;
-import aqar.model.AdvertiseRepository;
+import aqar.model.*;
 import com.sromku.polygon.Point;
-import com.sromku.polygon.Polygon;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static java.lang.Integer.parseInt;
@@ -31,12 +31,6 @@ public class AqarService {
     @Value("${aqar.search.url}")
     private String searchUrl;
 
-    @Value("${aqar.max.price}")
-    private int maxPrice;
-
-    @Value("${aqar.min.price}")
-    private int minPrice;
-
     @Value("${aqar.num.pages}")
     private int totalPageNum;
 
@@ -49,15 +43,18 @@ public class AqarService {
     @Value("${aqar.words.sleep}")
     private String sleepWord;
 
-    @Value("${aqar.map.polygon.vertexes}")
-    private String[] vertexes;
+    @Value("${aqar.words.floor}")
+    private String floorWord;
 
-    private Polygon cachedPolygon;
+    @Value("{aqar.words.2_rooms}")
+    private String twoRooms;
 
     private AdvertiseRepository adsRepository;
+    private JobRepository jobRepository;
 
-    public AqarService(AdvertiseRepository adsRepository) {
+    public AqarService(AdvertiseRepository adsRepository, JobRepository jobRepository) {
         this.adsRepository = adsRepository;
+        this.jobRepository = jobRepository;
     }
 
     Stream<String> run() {
@@ -69,14 +66,18 @@ public class AqarService {
                 .map(this::shortUrlWithTitle);
     }
 
-    private Stream<Element> getMatched(int pageNumber) {
+    private Stream<JobElement> getMatched(int pageNumber) {
         try {
             String currentPageUrl = baseUrl + searchUrl + pageNumber;
             log.info("processing " + currentPageUrl);
 
-            Elements aprtList = Jsoup.connect(currentPageUrl).get().select(".list-single-adcol");
+            Elements adsList = Jsoup.connect(currentPageUrl).get().select(".list-single-adcol");
+            List<Job> jobs = jobRepository.findAllByActiveIsTrue();
 
-            return aprtList.stream()
+            log.info("found {} active jobs in db", jobs.size());
+
+            return adsList.stream()
+                    .flatMap(it -> multiplex(jobs, it))
                     .filter(this::notProcessed)
                     .peek(it -> sleep())
                     .filter(this::matchesPrice)
@@ -84,7 +85,8 @@ public class AqarService {
                     .map(this::detailsPage)
                     .filter(this::insideSelectedArea)
                     .filter(this::hasElevator)
-                    .filter(this::hasMoreThanOneRoom);
+                    .filter(this::matchesRooms)
+                    .filter(this::matchesFloor);
 
         } catch (HttpStatusException ex) {
             log.error(ex.getStatusCode() + ", " + ex.getUrl() + ", " + ex.getMessage());
@@ -94,74 +96,99 @@ public class AqarService {
         return Stream.empty();
     }
 
-    private void markAsSuccess(Element pageElement) {
-        if (pageElement.select("kbd").hasText()) {
-            adsRepository.markAsSuccess(pageElement.select("kbd").text());
+    private void markAsSuccess(JobElement je) {
+        if (je.element().select("kbd").hasText()) {
+            adsRepository.markAsSuccess(je.element().select("kbd").text(), je.jobId());
         }
     }
 
-    private String shortUrlWithTitle(Element detailsPage) {
-        String title = detailsPage.select(".title h3 a").text();
-        return detailsPage.select("tr td a")
+    private String shortUrlWithTitle(JobElement je) {
+        String title = je.element().select(".title h3 a").text();
+        return je.element().select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("/ad/"))
-                .map((element) -> title + " " + "https://" + element.text())
+                .map((element) -> title + " " + "https://" + element.text() + " " + je.jobId())
                 .findFirst()
                 .orElse(null);
     }
 
-    private boolean notProcessed(Element element) {
-        String number = extractNumber(element.id());
-        if (adsRepository.alreadyProcessed(number)) {
-            log.info("Ad with id {} is already processed", number);
+    private Stream<JobElement> multiplex(List<Job> jobs, Element e) {
+        return jobs.stream().map(it -> new JobElement(it, e));
+    }
+
+    private boolean notProcessed(JobElement je) {
+        String number = extractNumber(je.element().id());
+
+        if (adsRepository.alreadyProcessed(number, je.jobId())) {
+            log.info("Ad with number: {} and job id: {} is already processed", number, je.jobId());
             return false;
         } else {
-            log.info("start processing Ad: {}", number);
-            Advertise ads = new Advertise(number, null);
+            log.info("start processing Ad: {} for job: {}", number, je.jobId());
+            Advertise ads = new Advertise(number, je.job());
             adsRepository.save(ads);
             return true;
         }
     }
 
-    private boolean matchesPrice(Element element) {
+    private boolean matchesPrice(JobElement je) {
         try {
-            int price = parseInt(extractNumber(element.select(".price").text()));
-            return price <= maxPrice && price >= minPrice ;
+            int price = parseInt(extractNumber(je.element().select(".price").text()));
+            boolean ret = true;
+            if (je.maxPrice() != null) {
+                ret = price <= je.maxPrice();
+            }
+            if (ret && je.minPrice() != null) {
+                ret = price >= je.minPrice();
+            }
+            return ret;
         } catch (Exception ignored) {
             return false;
         }
     }
 
-    private boolean hasImage(Element element) {
-        return !element.select(".adcol-imgs").isEmpty();
+    private boolean hasImage(JobElement je) {
+        return !je.hasImages() || !je.element().select(".adcol-imgs").isEmpty();
     }
 
-    private boolean hasMoreThanOneRoom(Element pageElement) {
-        String rooms = pageElement.select(".small-12 table").last().getElementsContainingOwnText(sleepWord).text();
-        return !rooms.contains("1");
+    private boolean matchesRooms(JobElement je) {
+        return je.numRooms().anyMatch(it -> {
+            String rooms = je.element().select(".small-12 table")
+                    .last().getElementsContainingOwnText(sleepWord).text();
+            rooms = rooms.replace(twoRooms, "2");
+            return it.equals(Integer.parseInt(extractNumber(rooms)));
+        });
     }
 
-    private boolean hasElevator(Element elementPage) {
-        return elementPage.select(".single-adcolum").text().contains(elevatorWord);
+    private boolean matchesFloor(JobElement je) {
+        return je.floorNumber().anyMatch(it -> {
+            String floor = je.element().select(".small-12 table")
+                    .last().getElementsContainingOwnText(floorWord).text();
+            return it.equals(Integer.parseInt(extractNumber(floor)));
+        });
     }
 
-    private boolean insideSelectedArea(Element elementPage) {
-        return elementPage.select("tr td a")
+    private boolean hasElevator(JobElement je) {
+        return !je.hasElevator() || je.element().select(".single-adcolum").text().contains(elevatorWord);
+    }
+
+    private boolean insideSelectedArea(JobElement je) {
+        return je.element().select("tr td a")
                 .stream()
                 .filter(it -> it.attr("href").contains("maps.google.com"))
                 .findFirst()
                 .map(it -> it.attr("href"))
                 .map(this::toPoint)
-                .map(this::insidePolygon)
+                .map(point -> je.polygon().contains(point))
                 .orElse(false);
     }
 
-    private Element detailsPage(Element listPage) {
+    private JobElement detailsPage(JobElement je) {
         try {
-            return Jsoup.connect(baseUrl + listPage.select("a").attr("href")).get();
+            Document element = Jsoup.connect(baseUrl + je.element().select("a").attr("href")).get();
+            return new JobElement(je.job(), element);
         } catch (IOException e) {
             log.error(e.getMessage());
-            return new Element("dummy");
+            return new JobElement(je.job(), new Element("Dummy"));
         }
     }
 
@@ -169,28 +196,6 @@ public class AqarService {
         float latitude = Float.parseFloat(url.substring(url.indexOf(LOC) + LOC.length(), url.indexOf(PLUS)));
         float longitude = Float.parseFloat(url.substring(url.indexOf(PLUS) + PLUS.length()));
         return new Point(latitude, longitude);
-    }
-
-    private boolean insidePolygon(Point point) {
-        createPolygonIfRequired();
-        return cachedPolygon.contains(point);
-    }
-
-    private void createPolygonIfRequired() {
-        if (cachedPolygon == null) { // this doesn't achieve double check idom, but it is okay in my case instead of lock the entire method
-            synchronized (this){
-                Polygon.Builder builder = Polygon.Builder();
-                Stream.of(vertexes)
-                        .map(this::newPoint)
-                        .forEach(builder::addVertex);
-                this.cachedPolygon = builder.build();
-            }
-        }
-    }
-
-    private Point newPoint(String coordinates) {
-        String[] v = coordinates.split(";");
-        return new Point(Float.parseFloat(v[0]), Float.parseFloat(v[1]));
     }
 
     private void sleep() {
@@ -201,7 +206,8 @@ public class AqarService {
         }
     }
 
-    private String extractNumber(String text){
+    private String extractNumber(String text) {
         return text.replaceAll("[^\\d.]", "");
     }
+
 }
