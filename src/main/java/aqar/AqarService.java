@@ -1,6 +1,9 @@
 package aqar;
 
-import aqar.model.*;
+import aqar.model.Advertise;
+import aqar.model.Job;
+import aqar.model.JobElement;
+import aqar.model.JobOutput;
 import aqar.model.repo.AdvertiseRepository;
 import aqar.model.repo.JobRepository;
 import com.sromku.polygon.Point;
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static java.lang.Integer.parseInt;
@@ -26,28 +30,22 @@ class AqarService {
 
     private static final String LOC = "loc:";
     private static final String PLUS = "+";
+    private static final Map<String, Document> CACHE = Util.lruCache(100);
 
     @Value("${aqar.base.url}")
     private String baseUrl;
-
     @Value("${aqar.search.url}")
     private String searchUrl;
-
     @Value("${aqar.num.pages}")
     private int totalPageNum;
-
     @Value("${aqar.sleepMillis}")
     private long sleepMillis;
-
     @Value("${aqar.words.elevator}")
     private String elevatorWord;
-
     @Value("${aqar.words.sleep}")
     private String sleepWord;
-
     @Value("${aqar.words.floor}")
     private String floorWord;
-
     @Value("{aqar.words.2_rooms}")
     private String twoRooms;
 
@@ -193,11 +191,12 @@ class AqarService {
 
     private JobElement detailsPage(JobElement je) {
         try {
-            Document element = Jsoup.connect(baseUrl + je.element().select("a").attr("href")).get();
-            return new JobElement(je.job(), element);
-        } catch (IOException e) {
+            String urlPart = je.element().select("a").attr("href");
+            Document document = CACHE.computeIfAbsent(urlPart, it -> fromUrl(baseUrl + it));
+            return new JobElement(je.job(), document);
+        } catch (Exception e) {
             log.error(e.getMessage());
-            return new JobElement(je.job(), new Element("Dummy"));
+            return new JobElement(je.job(), new Element("NULL"));
         }
     }
 
@@ -219,4 +218,11 @@ class AqarService {
         return text.replaceAll("[^\\d.]", "");
     }
 
+    private Document fromUrl(String url) {
+        try {
+            return Jsoup.connect(url).get();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
