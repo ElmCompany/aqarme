@@ -1,5 +1,6 @@
 package aqar;
 
+import aqar.model.JobOutput;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,14 +32,14 @@ public class Scheduler {
 
         log.info(" *********JOB STARTED *********");
 
-        Stream<String> run = aqarService.run();
-        long count = run.peek(url -> {
+        Stream<JobOutput> run = aqarService.run();
+        long count = run.peek(out -> {
             if (senderList != null && senderList.length > 0) {
                 log.info("found match url to the criteria {} ...sending via fb Messenger to {}",
-                        url, Arrays.toString(senderList));
-                Stream.of(senderList).forEach(it -> messengerService.send(it, url));
+                        out, Arrays.toString(senderList));
+                Stream.of(senderList).forEach(it -> messengerService.send(it, out.getUrl()));
             } else {
-                log.info("found match url to the criteria {}", url);
+                log.info("found match url to the criteria {}", out.getUrl());
             }
         }).count();
 

@@ -26,3 +26,10 @@ The `insideSelectedArea()` checks the coordinates according to the selected area
 <p align="center">
 <img src="https://github.com/mhewedy/aqarme/raw/master/src/main/resources/polygon.png" width="500">
 </p>
+
+
+Add job using
+
+```bash
+curl -H "Content-Type: application/json" -d '{"clientId": "client-id-1", "name": "my first job", "jobDetail": {"vertexes": "24.675722;46.556282,24.669794;46.542549,24.617369;46.568298,24.60426;46.588898,24.621115;46.656532,24.63984;46.647949,24.645145;46.625633,24.677906;46.640396,24.710034;46.618767,24.735606;46.590614", "maxPrice": "25000", "hasImages": "true", "hasElevator": "true", "numRooms": "2,3", "floorNumber": "1,2"}}' http://localhost:8080/api/job
+```
