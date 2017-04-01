@@ -1,13 +1,14 @@
 package aqar.model;
 
+import lombok.AccessLevel;
 import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
-@Setter
 @Entity
+@Setter(AccessLevel.PACKAGE)
 public class Job {
 
     @Id
@@ -25,7 +26,7 @@ public class Job {
     private List<Advertise> advertise;
     private Boolean active = true;
 
-    public String getClientId() {
+    public String clientId() {
         return clientId;
     }
 }

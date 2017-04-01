@@ -1,6 +1,8 @@
 package aqar;
 
 import aqar.model.*;
+import aqar.model.repo.AdvertiseRepository;
+import aqar.model.repo.JobRepository;
 import com.sromku.polygon.Point;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.HttpStatusException;

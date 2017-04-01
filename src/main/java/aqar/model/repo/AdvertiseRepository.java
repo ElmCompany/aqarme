@@ -1,5 +1,6 @@
-package aqar.model;
+package aqar.model.repo;
 
+import aqar.model.Advertise;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

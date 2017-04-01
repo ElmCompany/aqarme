@@ -1,8 +1,8 @@
 package aqar;
 
-import aqar.model.AdvertiseRepository;
+import aqar.model.repo.AdvertiseRepository;
 import aqar.model.Job;
-import aqar.model.JobRepository;
+import aqar.model.repo.JobRepository;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -35,9 +35,9 @@ public class ApiController {
 
     @PostMapping("/job")
     public ResponseEntity<?> addJob(@Valid @RequestBody Job job) {
-        log.info("delete all jobs for client id: {} ", job.getClientId());
-        jobRepository.deleteByClientId(job.getClientId());
-        log.info("add new job for client id: {}", job.getClientId());
+        log.info("delete all jobs for client id: {} ", job.clientId());
+        jobRepository.deleteByClientId(job.clientId());
+        log.info("add new job for client id: {}", job.clientId());
         jobRepository.save(job);
         return ok().build();
     }

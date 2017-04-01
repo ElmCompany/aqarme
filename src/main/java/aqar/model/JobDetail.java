@@ -1,19 +1,18 @@
 package aqar.model;
 
+import lombok.AccessLevel;
 import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
-@Setter
 @Entity
-public class JobDetail {
+@Setter(AccessLevel.PACKAGE)
+class JobDetail {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne(optional = false, mappedBy = "jobDetail")
-    private Job job;
 
     Integer minPrice;
     Integer maxPrice;
@@ -26,4 +25,7 @@ public class JobDetail {
     @NotNull
     @Column(nullable = false)
     String vertexes;
+
+    @OneToOne(optional = false, mappedBy = "jobDetail")
+    private Job job;
 }
