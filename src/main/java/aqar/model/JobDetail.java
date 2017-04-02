@@ -24,7 +24,7 @@ class JobDetail {
     // comma-separated numbers
     String floorNumber;
     @NotEmpty
-    @Column(nullable = false)
+    @Column(nullable = false, length=8000)
     String vertexes;
     // comma-separated Strings
 
