@@ -46,7 +46,7 @@ class AqarService {
     private String sleepWord;
     @Value("${aqar.words.floor}")
     private String floorWord;
-    @Value("{aqar.words.2_rooms}")
+    @Value("${aqar.words.2_rooms}")
     private String twoRooms;
 
     private AdvertiseRepository adsRepository;
@@ -169,7 +169,12 @@ class AqarService {
         return !je.hasFloor() || je.floorNumber().anyMatch(it -> {
             String floor = je.element().select(".small-12 table")
                     .last().getElementsContainingOwnText(floorWord).text();
-            return it.equals(Integer.parseInt(extractNumber(floor)));
+            String floorNum = extractNumber(floor);
+            if (floorNum.trim().length() > 0){
+                return it.equals(Integer.parseInt(floorNum));
+            }else{
+                return true;
+            }
         });
     }
 
