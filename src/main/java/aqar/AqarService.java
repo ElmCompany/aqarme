@@ -64,7 +64,6 @@ class AqarService {
         if (jobsCount > 0) {
             return rangeClosed(1, totalPageNum)
                     .boxed()
-                    .peek(it -> sleep())
                     .flatMap(this::getMatched)
                     .peek(this::markAsSuccess)
                     .map(this::shortUrlWithTitle);
@@ -76,9 +75,7 @@ class AqarService {
     private Stream<JobElement> getMatched(int pageNumber) {
         try {
             String currentPageUrl = baseUrl + searchUrl + pageNumber;
-            log.info("processing " + currentPageUrl);
-
-            Elements adsList = Jsoup.connect(currentPageUrl).get().select(".list-single-adcol");
+            Elements adsList = fromUrl(currentPageUrl, true).select(".list-single-adcol");
             List<Job> jobs = jobRepository.findAll();
 
             log.info("found {} active jobs in db", jobs.size());
@@ -94,10 +91,13 @@ class AqarService {
                     .filter(this::matchesRooms)
                     .filter(this::matchesFloor);
 
-        } catch (HttpStatusException ex) {
-            log.error(ex.getStatusCode() + ", " + ex.getUrl() + ", " + ex.getMessage());
         } catch (Exception ex) {
-            log.error(ex.getMessage());
+            if (ex.getCause() instanceof HttpStatusException) {
+                HttpStatusException hse = ((HttpStatusException) ex.getCause());
+                log.error(hse.getStatusCode() + ", " + hse.getUrl() + ", " + hse.getMessage());
+            } else {
+                log.error(ex.getMessage());
+            }
         }
         return Stream.empty();
     }
@@ -170,9 +170,9 @@ class AqarService {
             String floor = je.element().select(".small-12 table")
                     .last().getElementsContainingOwnText(floorWord).text();
             String floorNum = extractNumber(floor);
-            if (floorNum.trim().length() > 0){
+            if (floorNum.trim().length() > 0) {
                 return it.equals(Integer.parseInt(floorNum));
-            }else{
+            } else {
                 return true;
             }
         });
@@ -196,7 +196,7 @@ class AqarService {
     private JobElement detailsPage(JobElement je) {
         try {
             String urlPart = je.element().select("a").attr("href");
-            Document document = CACHE.computeIfAbsent(urlPart, it -> fromUrlWithSleep(baseUrl + it));
+            Document document = CACHE.computeIfAbsent(urlPart, it -> fromUrl(baseUrl + it, true));
             return new JobElement(je.job(), document);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -222,9 +222,10 @@ class AqarService {
         return text.replaceAll("[^\\d.]", "");
     }
 
-    private Document fromUrlWithSleep(String url) {
+    private Document fromUrl(String url, boolean sleep) {
         try {
-            sleep();
+            if (sleep) sleep();
+            log.info("getting document for url: {}", url);
             return Jsoup.connect(url).get();
         } catch (IOException e) {
             throw new RuntimeException(e);
