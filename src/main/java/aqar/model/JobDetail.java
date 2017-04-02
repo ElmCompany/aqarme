@@ -2,6 +2,7 @@ package aqar.model;
 
 import lombok.AccessLevel;
 import lombok.Setter;
+import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -22,7 +23,7 @@ class JobDetail {
     String numRooms;
     // comma-separated numbers
     String floorNumber;
-    @NotNull
+    @NotEmpty
     @Column(nullable = false)
     String vertexes;
     // comma-separated Strings

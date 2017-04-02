@@ -158,7 +158,7 @@ class AqarService {
     }
 
     private boolean matchesRooms(JobElement je) {
-        return je.numRooms().anyMatch(it -> {
+        return !je.hasRooms() || je.numRooms().anyMatch(it -> {
             String rooms = je.element().select(".small-12 table")
                     .last().getElementsContainingOwnText(sleepWord).text();
             rooms = rooms.replace(twoRooms, "2");
@@ -167,7 +167,7 @@ class AqarService {
     }
 
     private boolean matchesFloor(JobElement je) {
-        return je.floorNumber().anyMatch(it -> {
+        return !je.hasFloor() || je.floorNumber().anyMatch(it -> {
             String floor = je.element().select(".small-12 table")
                     .last().getElementsContainingOwnText(floorWord).text();
             return it.equals(Integer.parseInt(extractNumber(floor)));

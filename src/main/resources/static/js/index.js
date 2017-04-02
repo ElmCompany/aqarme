@@ -3,6 +3,7 @@ var selectedShape;
 var colors = ['#1E90FF'];
 var selectedColor;
 var colorButtons = {};
+var pathstr = "";
 
 function clearSelection() {
     if (selectedShape) {
@@ -11,7 +12,7 @@ function clearSelection() {
         }
         selectedShape = null;
     }
-    curseldiv.innerHTML = "<b>cursel</b>:";
+//    curseldiv.innerHTML = "<b>cursel</b>:";
 }
 
 function updateCurSelText(shape) {
@@ -21,14 +22,15 @@ function updateCurSelText(shape) {
     }
     pathstr = "" + selectedShape.getPath;
     if (typeof selectedShape.getPath == 'function') {
-        pathstr = "[";
+        pathstr = "";
         for (var i = 0; i < selectedShape.getPath().getLength(); i++) {
             // .toUrlValue(5) limits number of decimals, default is 6 but can do more
             pathstr += selectedShape.getPath().getAt(i).toUrlValue().replace(",", ";") + ",";
         }
         pathstr = pathstr.slice(0, -1)
-        pathstr += "]";
+        pathstr += "";
     }
+    console.log(pathstr);
     bndstr = "" + selectedShape.getBounds;
     cntstr = "" + selectedShape.getBounds;
     if (typeof selectedShape.getBounds == 'function') {
@@ -46,7 +48,10 @@ function updateCurSelText(shape) {
     }
     //curseldiv.innerHTML = "<b>cursel</b>: " + selectedShape.type + " " + selectedShape + "; <i>pos</i>: " + posstr + " ; <i>path</i>: " + pathstr + " ; <i>bounds</i>: " + bndstr + " ; <i>Cb</i>: " + cntstr + " ; <i>radius</i>: " + radstr + " ; <i>Cr</i>: " + cntrstr ;
 
-    curseldiv.innerHTML = "<b>" + pathstr + "</b>";
+    //curseldiv.innerHTML = "<b>" + pathstr + "</b>";
+
+    var jobInputs = document.getElementById("job-input");
+    jobInputs.style.display = 'block';
 }
 
 function setSelection(shape, isNotMarker) {
@@ -68,7 +73,7 @@ function selectColor(color) {
     selectedColor = color;
     for (var i = 0; i < colors.length; ++i) {
         var currColor = colors[i];
-        colorButtons[currColor].style.border = currColor == color ? '2px solid #789' : '2px solid #fff';
+//        colorButtons[currColor].style.border = currColor == color ? '2px solid #789' : '2px solid #fff';
     }
 
     // Retrieves the current options from the drawing manager and replaces the
@@ -218,7 +223,7 @@ function initialize() {
     //~ DelPlcButDiv.style.color = 'rgb(25,25,25)'; // no effect?
     DelPlcButDiv.style.backgroundColor = '#fff';
     DelPlcButDiv.style.cursor = 'pointer';
-    DelPlcButDiv.innerHTML = 'DEL';
+//    DelPlcButDiv.innerHTML = 'DEL';
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(DelPlcButDiv);
     google.maps.event.addDomListener(DelPlcButDiv, 'click', deletePlacesSearchResults);
 
@@ -271,8 +276,44 @@ function initialize() {
     google.maps.event.addListener(map, 'bounds_changed', function() {
         var bounds = map.getBounds();
         searchBox.setBounds(bounds);
-        curposdiv.innerHTML = "<b>curpos</b> Z: " + map.getZoom() + " C: " + map.getCenter().toUrlValue();
+        //curposdiv.innerHTML = "<b>curpos</b> Z: " + map.getZoom() + " C: " + map.getCenter().toUrlValue();
     }); //////////////////////
 }
 
 google.maps.event.addDomListener(window, 'load', initialize);
+
+function addJob(){
+
+    var job = {
+        clientId: gevbi('clientId'),
+        name: gevbi('name'),
+        senders: gevbi('senders'),
+        jobDetail: {
+            vertexes: pathstr,
+            minPrice: gevbi('minPrice'),
+            maxPrice: gevbi('maxPrice'),
+            hasImages: document.getElementById('hasImages').checked,
+            hasElevator: document.getElementById('hasElevator').checked,
+            numRooms: gevbi('numRooms'),
+            floorNumber: gevbi('floorNumber')
+        }
+    }
+
+    console.log(job);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'api/job');
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function() {
+        if (xhr.status !== 200) {
+            window.alert('error : ' + xhr.responseText)
+        }else{
+            window.alert('success')
+        }
+    };
+    xhr.send(JSON.stringify(job));
+}
+
+function gevbi(eid){
+    return document.getElementById(eid).value;
+}

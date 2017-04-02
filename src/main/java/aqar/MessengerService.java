@@ -22,17 +22,21 @@ class MessengerService {
     }
 
     void send(String recipient, String str) {
-        String message = String.format(MESSAGE, recipient, str);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+        try{
+            String message = String.format(MESSAGE, recipient, str);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
 
-        HttpEntity<String> entity = new HttpEntity<>(message, headers);
-        ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+            HttpEntity<String> entity = new HttpEntity<>(message, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
 
-        if (response.getStatusCode() != HttpStatus.OK){
-            log.error(response.toString());
-        }else{
-            log.info("Ad: {}, response: {}", str, response.getStatusCode());
+            if (response.getStatusCode() != HttpStatus.OK){
+                log.error(response.toString());
+            }else{
+                log.info("Ad: {}, response: {}", str, response.getStatusCode());
+            }
+        }catch (Exception ex){
+            log.error("exception happens when sending Ad, exception: {}, Ad: {}", ex.getMessage(), str);
         }
     }
 }

@@ -35,6 +35,14 @@ public class JobElement {
         return job.jobDetail.hasElevator != null ? job.jobDetail.hasElevator : false;
     }
 
+    public boolean hasRooms(){
+        return job.jobDetail.numRooms != null && job.jobDetail.numRooms.length() > 0;
+    }
+
+    public boolean hasFloor(){
+        return job.jobDetail.floorNumber != null && job.jobDetail.floorNumber.length() > 0;
+    }
+
     public Stream<Integer> numRooms() {
         return integersFromCSV(job.jobDetail.numRooms);
     }
@@ -81,7 +89,7 @@ public class JobElement {
     }
 
     private Stream<String> getFromCSV(String csv) {
-        return csv == null ?
+        return csv == null || csv.trim().length() == 0 ?
                 Stream.empty() :
                 Stream.of(csv.split(","))
                         .map(String::trim);

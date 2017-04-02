@@ -41,20 +41,57 @@
       #delete-button {
         margin-top: 5px;
       }
+
+    input[type=text]{
+        width: 450px;
+        height: 25px;
+        font-size: 16px;
+    }
+    input[type=number]{
+        width: 450px;
+        height: 25px;
+        font-size: 16px;
+    }
+    input[type=button]{
+        width: 450px;
+        height: 25px;
+        font-size: 16px;
+    }
+    input[type=checkbox]{
+        font-size: 16px;
+    }
+    label{
+        width: 450px;
+        height: 25px;
+        font-size: 16px;
+    }
+
     </style>
     <script type="text/javascript" src="js/index.js"></script>
   </head>
   <body>
     <div id="panel">
-      <div id="color-palette"></div>
-      <div>
-        <button id="delete-button">Delete Selected Shape</button>
-      </div>
-    <div id="curpos"></div>
-    <div id="cursel"></div>
-    <!-- <div id="note"><small>Note: markers can be selected, but are not graphically indicated; can be deleted, but cannot have their color changed.</small></div> -->
+         <div id="job-input" >
+             <input type="text" id="clientId" placeholder="Client ID" />* <br/>
+             <input type="text" id="name" placeholder="Name" />*  <br/>
+             <input type="text" id="senders" placeholder="Comma separated sender list" />*  <br/>
+
+             <hr>
+
+             <input type="number" id="minPrice" placeholder="Min Price" /> <br/>
+             <input type="number" id="maxPrice" placeholder="Max Price" />  <br/>
+             <input type="checkbox" id="hasImages" placeholder="Has Images" /> <label>Has Images</label>  <br/>
+             <input type="checkbox" id="hasElevator" placeholder="Has Elevator" /> <label>Has Elevator</label> <br/>
+             <input type="text" id="numRooms" placeholder="Comma separated list of number of rooms" />  <br/>
+             <input type="text" id="floorNumber" placeholder="Comma separated list of number of floor Number" />  <br/>
+
+             <hr>
+
+             <input type="button" value="Add Job" onclick="javascript:addJob()">
+
+         </div>
+
     </div>
-    <input id="pac-input" type="text" placeholder="Search Box">
     <div id="map">A</div>
   </body>
 </html>
