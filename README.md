@@ -10,21 +10,20 @@ The main action is here:
 
 ```java
 return adsList.stream()
-	.flatMap(it -> multiplex(jobs, it))	// multiplex the number of apartements into the number of jobs running
-        .filter(this::notProcessed)		// skipped already processed items
-        .peek(it -> sleep())			// sleep 5 seconds so not to be blocked by aqar.fm
-        .filter(this::matchesPrice)		// filter by price (min and max prices)
-        .filter(this::hasImage)			// filter by having image
-        .map(this::detailsPage)			// get the details page of the advertise, get from the LRU cache if found
-        .filter(this::insideSelectedArea)	// check the lat&long to be inside the selected area on map
-        .filter(this::hasElevator)		// check to has elavator
-        .filter(this::matchesRooms)		// filter by number of rooms
-        .filter(this::matchesFloor);		// filter by floor number
+	.flatMap(it -> multiplex(jobs, it))// multiplex the number of apartements into the number of jobs running
+        .filter(this::notProcessed)	// skipped already processed items
+        .peek(it -> sleep())		// sleep 5 seconds so not to be blocked by aqar.fm
+        .filter(this::matchesPrice)	// filter by price (min and max prices)
+        .filter(this::hasImage)		// filter by having image
+        .map(this::detailsPage)		// get the details page of the advertise, get from the LRU cache if found
+        .filter(this::insideSelectedArea)// check the lat&long to be inside the selected area on map
+        .filter(this::hasElevator)	// check to has elavator
+        .filter(this::matchesRooms)	// filter by number of rooms
+        .filter(this::matchesFloor);	// filter by floor number
 ```
 
 And then the matched result is sent to me via facebook messagener using [Send API](https://developers.facebook.com/docs/messenger-platform/send-api-reference).
 
-The `insideSelectedArea()` checks the coordinates according to the selected area on maps like the following one:
 <p align="center">
 <img src="https://github.com/mhewedy/aqarme/raw/master/img.PNG" width="800">
 </p>
