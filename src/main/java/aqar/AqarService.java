@@ -46,7 +46,7 @@ class AqarService {
     private String sleepWord;
     @Value("${aqar.words.floor}")
     private String floorWord;
-    @Value("{aqar.words.2_rooms}")
+    @Value("${aqar.words.2_rooms}")
     private String twoRooms;
 
     private AdvertiseRepository adsRepository;
