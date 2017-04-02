@@ -86,7 +86,6 @@ class AqarService {
             return adsList.stream()
                     .flatMap(it -> multiplex(jobs, it))
                     .filter(this::notProcessed)
-                    .peek(it -> sleep())
                     .filter(this::matchesPrice)
                     .filter(this::hasImage)
                     .map(this::detailsPage)
@@ -192,7 +191,7 @@ class AqarService {
     private JobElement detailsPage(JobElement je) {
         try {
             String urlPart = je.element().select("a").attr("href");
-            Document document = CACHE.computeIfAbsent(urlPart, it -> fromUrl(baseUrl + it));
+            Document document = CACHE.computeIfAbsent(urlPart, it -> fromUrlWithSleep(baseUrl + it));
             return new JobElement(je.job(), document);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -218,8 +217,9 @@ class AqarService {
         return text.replaceAll("[^\\d.]", "");
     }
 
-    private Document fromUrl(String url) {
+    private Document fromUrlWithSleep(String url) {
         try {
+            sleep();
             return Jsoup.connect(url).get();
         } catch (IOException e) {
             throw new RuntimeException(e);
