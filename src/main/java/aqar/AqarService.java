@@ -219,10 +219,10 @@ class AqarService {
         return text.replaceAll("[^\\d.]", "");
     }
 
-    private Document fromUrl(String url, boolean sleep) {
+    private Document fromUrl(String url, boolean sleepBeforeHit) {
         try {
-            if (sleep) sleep();
-            log.info("getting document for url: {}", url);
+            if (sleepBeforeHit) sleep();
+            log.debug("connect to: {}", url);
             return Jsoup.connect(url).get();
         } catch (IOException e) {
             throw new RuntimeException(e);
