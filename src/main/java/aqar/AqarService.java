@@ -3,7 +3,6 @@ package aqar;
 import aqar.model.Advertise;
 import aqar.model.Job;
 import aqar.model.JobElement;
-import aqar.model.JobOutput;
 import aqar.model.repo.AdvertiseRepository;
 import aqar.model.repo.JobRepository;
 import com.sromku.polygon.Point;
@@ -22,6 +21,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static java.lang.Integer.parseInt;
+import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.*;
 import static java.util.stream.IntStream.rangeClosed;
 
 @Slf4j
@@ -30,7 +31,7 @@ class AqarService {
 
     private static final String LOC = "loc:";
     private static final String PLUS = "+";
-    private static final Map<String, Document> CACHE = Util.lruCache(100);
+    private static final Map<String, Document> DOC_CACHE = Util.lruCache(100);
 
     @Value("${aqar.base.url}")
     private String baseUrl;
@@ -57,7 +58,8 @@ class AqarService {
         this.jobRepository = jobRepository;
     }
 
-    Stream<JobOutput> run() {
+    Map<String, List<String>> run() {
+
         long jobsCount = jobRepository.count();
         log.info("jobs count is : {} ", jobsCount);
 
@@ -66,9 +68,10 @@ class AqarService {
                     .boxed()
                     .flatMap(this::getMatched)
                     .peek(this::markAsSuccess)
-                    .map(this::shortUrlWithTitle);
+                    .collect(groupingBy(JobElement::clientId,
+                            mapping(this::adNumber, toList())));
         } else {
-            return Stream.empty();
+            return emptyMap();
         }
     }
 
@@ -108,14 +111,8 @@ class AqarService {
         }
     }
 
-    private JobOutput shortUrlWithTitle(JobElement je) {
-        String title = je.element().select(".title h3 a").text();
-        return je.element().select("tr td a")
-                .stream()
-                .filter(it -> it.attr("href").contains("/ad/"))
-                .map(it -> new JobOutput("https://" + it.text(), title, je.clientId(), je.senders()))
-                .findFirst()
-                .orElse(null);
+    private String adNumber(JobElement je) {
+        return je.element().select("kbd").text();
     }
 
     private Stream<JobElement> multiplex(List<Job> jobs, Element e) {
@@ -196,7 +193,7 @@ class AqarService {
     private JobElement detailsPage(JobElement je) {
         try {
             String urlPart = je.element().select("a").attr("href");
-            Document document = CACHE.computeIfAbsent(urlPart, it -> fromUrl(baseUrl + it, true));
+            Document document = DOC_CACHE.computeIfAbsent(urlPart, it -> fromUrl(baseUrl + it, true));
             return new JobElement(je.job(), document);
         } catch (Exception e) {
             log.error(e.getMessage());

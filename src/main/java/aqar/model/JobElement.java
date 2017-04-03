@@ -35,11 +35,11 @@ public class JobElement {
         return job.jobDetail.hasElevator != null ? job.jobDetail.hasElevator : false;
     }
 
-    public boolean hasRooms(){
+    public boolean hasRooms() {
         return job.jobDetail.numRooms != null && job.jobDetail.numRooms.length() > 0;
     }
 
-    public boolean hasFloor(){
+    public boolean hasFloor() {
         return job.jobDetail.floorNumber != null && job.jobDetail.floorNumber.length() > 0;
     }
 
@@ -64,12 +64,8 @@ public class JobElement {
         return cachedPolygon;
     }
 
-    public String clientId(){
+    public String clientId() {
         return job.clientId;
-    }
-
-    public Stream<String> senders(){
-        return getFromCSV(job.senders);
     }
     // ---------
 

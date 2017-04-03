@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 
 public interface AdvertiseRepository extends JpaRepository<Advertise, Long> {
 
@@ -22,4 +24,9 @@ public interface AdvertiseRepository extends JpaRepository<Advertise, Long> {
 
 
     long countBySuccessIsTrue();
+
+    List<Advertise> findAllBySuccessIsTrueAndJobClientIdEqualsOrderByIdDesc(String clientId);
+
+    Long countBySuccessIsTrueAndJobClientIdEqualsOrderByIdDesc(String clientId);
+
 }

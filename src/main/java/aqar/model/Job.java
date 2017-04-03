@@ -24,13 +24,6 @@ public class Job {
     @JoinColumn(name = "job_detail_id", unique = true, nullable = false, updatable = false)
     JobDetail jobDetail;
 
-    @NotEmpty
-    @Column(nullable = false)
-    String senders;
-
-    @NotEmpty
-    private String name;
-
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "job")
     private List<Advertise> advertise;
 

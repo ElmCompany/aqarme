@@ -286,8 +286,6 @@ function addJob(){
 
     var job = {
         clientId: gevbi('clientId'),
-        name: gevbi('name'),
-        senders: gevbi('senders'),
         jobDetail: {
             vertexes: pathstr,
             minPrice: gevbi('minPrice'),
@@ -302,7 +300,7 @@ function addJob(){
     console.log(job);
 
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'api/job');
+    xhr.open('POST', 'api/jobs');
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onload = function() {
         if (xhr.status !== 200) {

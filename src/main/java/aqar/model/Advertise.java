@@ -24,4 +24,8 @@ public class Advertise {
         this.number = number;
         this.job = job;
     }
+
+    public String number() {
+        return number;
+    }
 }

@@ -23,10 +23,10 @@ class JobDetail {
     String numRooms;
     // comma-separated numbers
     String floorNumber;
+    // comma-separated Strings
     @NotEmpty
     @Column(nullable = false, length=8000)
     String vertexes;
-    // comma-separated Strings
 
     @OneToOne(optional = false, mappedBy = "jobDetail")
     private Job job;
