@@ -167,11 +167,7 @@ class AqarService {
             String floor = je.element().select(".small-12 table")
                     .last().getElementsContainingOwnText(floorWord).text();
             String floorNum = extractNumber(floor);
-            if (floorNum.trim().length() > 0) {
-                return it.equals(Integer.parseInt(floorNum));
-            } else {
-                return true;
-            }
+            return floorNum.trim().length() <= 0 || it.equals(Integer.parseInt(floorNum));
         });
     }
 
