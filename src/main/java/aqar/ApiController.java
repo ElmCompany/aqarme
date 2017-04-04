@@ -52,6 +52,11 @@ public class ApiController {
                 .collect(toList()));
     }
 
+    @GetMapping
+    public ResponseEntity<?> up(){
+        return ok("up");
+    }
+
     @GetMapping("/count/{clientId}")
     public ResponseEntity<?> countAdsByClientId(@PathVariable("clientId") String clientId) {
         return ok(adsRepository.countBySuccessIsTrueAndJobClientIdEqualsOrderByIdDesc(clientId));
