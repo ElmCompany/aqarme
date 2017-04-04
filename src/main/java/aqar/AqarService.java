@@ -82,6 +82,7 @@ class AqarService {
                 .filter(this::notProcessed)
                 .map(this::detailsPage)
                 .flatMap(this::multiplexByJobs)
+                .parallel()
                 .filter(this::notProcessed)
                 .filter(this::matchesPrice)
                 .filter(this::hasImage)
