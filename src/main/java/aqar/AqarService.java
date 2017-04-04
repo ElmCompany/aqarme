@@ -75,7 +75,7 @@ class AqarService {
     // ------------------------------------------------------------------------------------
 
     private Stream<JobElement> getMatchedJobElements(int pageNumber) {
-        Elements adsList = getfromUrl(baseUrl + searchUrl + pageNumber).select(".list-single-adcol");
+        Elements adsList = getFromUrl(baseUrl + searchUrl + pageNumber).select(".list-single-adcol");
 
         return adsList.stream()
                 .filter(this::notProcessed)
@@ -110,7 +110,7 @@ class AqarService {
 
     private Element detailsPage(Element element) {
         String urlPart = element.select("a").attr("href");
-        return getfromUrl(baseUrl + urlPart);
+        return getFromUrl(baseUrl + urlPart);
     }
 
     private Stream<JobElement> multiplexByJobs(Element e) {
@@ -193,7 +193,7 @@ class AqarService {
     /**
      * sleeps for {@link #sleepMillis} before get the document
      */
-    private Document getfromUrl(String url) {
+    private Document getFromUrl(String url) {
         try {
             Thread.sleep(sleepMillis);
             log.info("connect to: {}", url);
