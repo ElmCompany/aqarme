@@ -82,8 +82,8 @@ class AqarService {
             Elements adsList = getfromUrlAndSleep(currentPageUrl).select(".list-single-adcol");
             
             return adsList.stream()
-					.filter(this::notProcessed)
-					.map(this::detailsPage)
+                    .filter(this::notProcessed)
+                    .map(this::detailsPage)
                     .flatMap(this::multiplex)
                     .filter(this::notProcessed)
                     .filter(this::matchesPrice)
