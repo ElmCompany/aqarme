@@ -84,7 +84,7 @@ class AqarService {
             return adsList.stream()
                     .filter(this::notProcessed)
                     .map(this::detailsPage)
-                    .flatMap(this::multiplex)
+                    .flatMap(this::multiplexByJobs)
                     .filter(this::notProcessed)
                     .filter(this::matchesPrice)
                     .filter(this::hasImage)
@@ -135,7 +135,7 @@ class AqarService {
         }
     }
 
-    private Stream<JobElement> multiplex(Element e) {
+    private Stream<JobElement> multiplexByJobs(Element e) {
         return jobRepository.findAll().stream().map(it -> new JobElement(it, e));
     }
 
