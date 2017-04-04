@@ -12,6 +12,9 @@ import java.util.List;
 
 
 public interface AdvertiseRepository extends JpaRepository<Advertise, Long> {
+	
+	@Query("select count(o) from Advertise o join o.job j where o.number = :number")
+	long countOfJobsProcessedAdvertise(@Param("number") String number);
 
     @Query("select count(o) > 0 from Advertise o where o.number = :number and o.job.id = :jobId")
     boolean alreadyProcessed(@Param("number") String number, @Param("jobId") Long jobId);
@@ -28,5 +31,4 @@ public interface AdvertiseRepository extends JpaRepository<Advertise, Long> {
     List<Advertise> findAllBySuccessIsTrueAndJobClientIdEqualsOrderByIdDesc(String clientId);
 
     Long countBySuccessIsTrueAndJobClientIdEqualsOrderByIdDesc(String clientId);
-
 }

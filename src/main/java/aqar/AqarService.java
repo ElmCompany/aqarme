@@ -1,12 +1,15 @@
 package aqar;
 
-import aqar.model.Advertise;
-import aqar.model.Job;
-import aqar.model.JobElement;
-import aqar.model.repo.AdvertiseRepository;
-import aqar.model.repo.JobRepository;
-import com.sromku.polygon.Point;
-import lombok.extern.slf4j.Slf4j;
+import static java.lang.Integer.*;
+import static java.util.Collections.*;
+import static java.util.stream.Collectors.*;
+import static java.util.stream.IntStream.*;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,15 +18,13 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
+import com.sromku.polygon.Point;
 
-import static java.lang.Integer.parseInt;
-import static java.util.Collections.emptyMap;
-import static java.util.stream.Collectors.*;
-import static java.util.stream.IntStream.rangeClosed;
+import aqar.model.Advertise;
+import aqar.model.JobElement;
+import aqar.model.repo.AdvertiseRepository;
+import aqar.model.repo.JobRepository;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -31,7 +32,6 @@ class AqarService {
 
     private static final String LOC = "loc:";
     private static final String PLUS = "+";
-    private static final Map<String, Document> DOC_CACHE = Util.lruCache(100);
 
     @Value("${aqar.base.url}")
     private String baseUrl;
@@ -59,7 +59,6 @@ class AqarService {
     }
 
     Map<String, List<String>> run() {
-
         long jobsCount = jobRepository.count();
         log.info("jobs count is : {} ", jobsCount);
 
@@ -74,26 +73,26 @@ class AqarService {
             return emptyMap();
         }
     }
+    
+    // ------------------------------------------------------------------------------------
 
     private Stream<JobElement> getMatched(int pageNumber) {
         try {
             String currentPageUrl = baseUrl + searchUrl + pageNumber;
-            Elements adsList = fromUrl(currentPageUrl, true).select(".list-single-adcol");
-            List<Job> jobs = jobRepository.findAll();
-
-            log.info("found {} active jobs in db", jobs.size());
-
-            return adsList.stream()
-                    .flatMap(it -> multiplex(jobs, it))
+            Elements adsList = getfromUrlAndSleep(currentPageUrl).select(".list-single-adcol");
+            
+			return adsList.stream()
+            		.filter(this::notProcessed)
+            		.map(this::detailsPage)
+                    .flatMap(this::multiplex)
                     .filter(this::notProcessed)
                     .filter(this::matchesPrice)
                     .filter(this::hasImage)
-                    .map(this::detailsPage)
                     .filter(this::insideSelectedArea)
                     .filter(this::hasElevator)
                     .filter(this::matchesRooms)
                     .filter(this::matchesFloor);
-
+				
         } catch (Exception ex) {
             if (ex.getCause() instanceof HttpStatusException) {
                 HttpStatusException hse = ((HttpStatusException) ex.getCause());
@@ -110,18 +109,38 @@ class AqarService {
             adsRepository.markAsSuccess(je.element().select("kbd").text(), je.jobId());
         }
     }
-
+    
     private String adNumber(JobElement je) {
         return je.element().select("kbd").text();
     }
+    
+    // ------------------------------------------------------------------------------------    
+    
+    private boolean notProcessed(Element element) {
+        String number = extractNumber(element.id());
+        if (adsRepository.countOfJobsProcessedAdvertise(number) == jobRepository.count()) {
+            log.info("Ad with number: {} is already processed by all jobs", number);
+            return false;
+        }
+        return true;
+    }
+    
+    private Element detailsPage(Element element) {
+        try {
+            String urlPart = element.select("a").attr("href");
+            return getfromUrlAndSleep(baseUrl + urlPart);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return new Element("null");
+        }
+    }
 
-    private Stream<JobElement> multiplex(List<Job> jobs, Element e) {
-        return jobs.stream().map(it -> new JobElement(it, e));
+    private Stream<JobElement> multiplex(Element e) {
+        return jobRepository.findAll().stream().map(it -> new JobElement(it, e));
     }
 
     private boolean notProcessed(JobElement je) {
-        String number = extractNumber(je.element().id());
-
+        String number = adNumber(je);
         if (adsRepository.alreadyProcessed(number, je.jobId())) {
             log.info("Ad with number: {} and job id: {} is already processed", number, je.jobId());
             return false;
@@ -135,7 +154,7 @@ class AqarService {
 
     private boolean matchesPrice(JobElement je) {
         try {
-            int price = parseInt(extractNumber(je.element().select(".price").text()));
+            int price = parseInt(extractNumber(je.element().select(".label ,radius").text())) * 1000;
             boolean ret = true;
             if (je.maxPrice() != null) {
                 ret = price <= je.maxPrice();
@@ -150,7 +169,22 @@ class AqarService {
     }
 
     private boolean hasImage(JobElement je) {
-        return !je.hasImages() || !je.element().select(".adcol-imgs").isEmpty();
+        return !je.hasImages() || !je.element().select("#adcol-images").isEmpty();
+    }
+    
+    private boolean insideSelectedArea(JobElement je) {
+        return je.element().select("tr td a")
+                .stream()
+                .filter(it -> it.attr("href").contains("maps.google.com"))
+                .findFirst()
+                .map(it -> it.attr("href"))
+                .map(this::toPoint)
+                .map(point -> je.polygon().contains(point))
+                .orElse(false);
+    }
+    
+    private boolean hasElevator(JobElement je) {
+        return !je.hasElevator() || je.element().select(".single-adcolum").text().contains(elevatorWord);
     }
 
     private boolean matchesRooms(JobElement je) {
@@ -170,39 +204,24 @@ class AqarService {
             return floorNum.trim().length() <= 0 || it.equals(Integer.parseInt(floorNum));
         });
     }
-
-    private boolean hasElevator(JobElement je) {
-        return !je.hasElevator() || je.element().select(".single-adcolum").text().contains(elevatorWord);
-    }
-
-    private boolean insideSelectedArea(JobElement je) {
-        return je.element().select("tr td a")
-                .stream()
-                .filter(it -> it.attr("href").contains("maps.google.com"))
-                .findFirst()
-                .map(it -> it.attr("href"))
-                .map(this::toPoint)
-                .map(point -> je.polygon().contains(point))
-                .orElse(false);
-    }
-
-    private JobElement detailsPage(JobElement je) {
-        try {
-            String urlPart = je.element().select("a").attr("href");
-            Document document = DOC_CACHE.computeIfAbsent(urlPart, it -> fromUrl(baseUrl + it, true));
-            return new JobElement(je.job(), document);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return new JobElement(je.job(), new Element("NULL"));
-        }
-    }
-
+    // ------------------------------------------------------------------------------------------------
+    
     private Point toPoint(String url) {
         float latitude = Float.parseFloat(url.substring(url.indexOf(LOC) + LOC.length(), url.indexOf(PLUS)));
         float longitude = Float.parseFloat(url.substring(url.indexOf(PLUS) + PLUS.length()));
         return new Point(latitude, longitude);
     }
 
+    private Document getfromUrlAndSleep(String url) {
+        try {
+            sleep();
+            log.info("connect to: {}", url);
+            return Jsoup.connect(url).get();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     private void sleep() {
         try {
             Thread.sleep(sleepMillis);
@@ -213,15 +232,5 @@ class AqarService {
 
     private String extractNumber(String text) {
         return text.replaceAll("[^\\d.]", "");
-    }
-
-    private Document fromUrl(String url, boolean sleepBeforeHit) {
-        try {
-            if (sleepBeforeHit) sleep();
-            log.debug("connect to: {}", url);
-            return Jsoup.connect(url).get();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

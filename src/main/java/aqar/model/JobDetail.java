@@ -1,11 +1,16 @@
 package aqar.model;
 
-import lombok.AccessLevel;
-import lombok.Setter;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
+
 import org.hibernate.validator.constraints.NotEmpty;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import lombok.AccessLevel;
+import lombok.Setter;
 
 @Entity
 @Setter(AccessLevel.PACKAGE)
