@@ -14,7 +14,8 @@ public class Advertise {
 
     private String number;
 
-    private Boolean success;
+    @SuppressWarnings("unused")
+	private Boolean success;
 
     @ManyToOne
     @JoinColumn(name = "job_id", nullable = false)

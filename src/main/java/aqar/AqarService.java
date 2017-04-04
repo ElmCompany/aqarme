@@ -5,7 +5,6 @@ import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static java.util.stream.IntStream.*;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -65,7 +64,7 @@ class AqarService {
         if (jobsCount > 0) {
             return rangeClosed(1, totalPageNum)
                     .boxed()
-                    .flatMap(this::getMatched)
+                    .flatMap(this::getMatchedJobElements)
                     .peek(this::markAsSuccess)
                     .collect(groupingBy(JobElement::clientId,
                             mapping(this::adNumber, toList())));
@@ -76,42 +75,26 @@ class AqarService {
     
     // ------------------------------------------------------------------------------------
 
-    private Stream<JobElement> getMatched(int pageNumber) {
-        try {
-            String currentPageUrl = baseUrl + searchUrl + pageNumber;
-            Elements adsList = getfromUrlAndSleep(currentPageUrl).select(".list-single-adcol");
-            
-            return adsList.stream()
-                    .filter(this::notProcessed)
-                    .map(this::detailsPage)
-                    .flatMap(this::multiplexByJobs)
-                    .filter(this::notProcessed)
-                    .filter(this::matchesPrice)
-                    .filter(this::hasImage)
-                    .filter(this::insideSelectedArea)
-                    .filter(this::hasElevator)
-                    .filter(this::matchesRooms)
-                    .filter(this::matchesFloor);
-				
-        } catch (Exception ex) {
-            if (ex.getCause() instanceof HttpStatusException) {
-                HttpStatusException hse = ((HttpStatusException) ex.getCause());
-                log.error(hse.getStatusCode() + ", " + hse.getUrl() + ", " + hse.getMessage());
-            } else {
-                log.error(ex.getMessage());
-            }
-        }
-        return Stream.empty();
+    private Stream<JobElement> getMatchedJobElements(int pageNumber) {
+        Elements adsList = getfromUrl(baseUrl + searchUrl + pageNumber).select(".list-single-adcol");
+        
+        return adsList.stream()
+                .filter(this::notProcessed)
+                .map(this::detailsPage)
+                .flatMap(this::multiplexByJobs)
+                .filter(this::notProcessed)
+                .filter(this::matchesPrice)
+                .filter(this::hasImage)
+                .filter(this::insideSelectedArea)
+                .filter(this::hasElevator)
+                .filter(this::matchesRooms)
+                .filter(this::matchesFloor);
     }
 
     private void markAsSuccess(JobElement je) {
         if (je.element().select("kbd").hasText()) {
             adsRepository.markAsSuccess(je.element().select("kbd").text(), je.jobId());
         }
-    }
-    
-    private String adNumber(JobElement je) {
-        return je.element().select("kbd").text();
     }
     
     // ------------------------------------------------------------------------------------    
@@ -126,13 +109,8 @@ class AqarService {
     }
     
     private Element detailsPage(Element element) {
-        try {
-            String urlPart = element.select("a").attr("href");
-            return getfromUrlAndSleep(baseUrl + urlPart);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return new Element("null");
-        }
+        String urlPart = element.select("a").attr("href");
+        return getfromUrl(baseUrl + urlPart);
     }
 
     private Stream<JobElement> multiplexByJobs(Element e) {
@@ -212,25 +190,30 @@ class AqarService {
         return new Point(latitude, longitude);
     }
 
-    private Document getfromUrlAndSleep(String url) {
-        try {
-            sleep();
-            log.info("connect to: {}", url);
-            return Jsoup.connect(url).get();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    
-    private void sleep() {
-        try {
-            Thread.sleep(sleepMillis);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
+	/**
+	 * sleeps for {@link #sleepMillis} before get the document
+	 */
+	private Document getfromUrl(String url) {
+		try {
+			Thread.sleep(sleepMillis);
+			log.info("connect to: {}", url);
+			return Jsoup.connect(url).get();
+		} catch (Exception ex) {
+			if (ex.getCause() instanceof HttpStatusException) {
+				HttpStatusException hse = ((HttpStatusException) ex.getCause());
+				log.error(hse.getStatusCode() + ", " + hse.getUrl() + ", " + hse.getMessage());
+			} else {
+				log.error(ex.getMessage());
+			}
+			return new Document(url);
+		}
+	}
 
     private String extractNumber(String text) {
         return text.replaceAll("[^\\d.]", "");
+    }
+    
+    private String adNumber(JobElement je) {
+        return je.element().select("kbd").text();
     }
 }
