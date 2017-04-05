@@ -92,9 +92,7 @@ class AqarService {
     }
 
     private void markAsSuccess(JobElement je) {
-        if (je.element().select("kbd").hasText()) {
-            adsRepository.markAsSuccess(je.element().select("kbd").text(), je.jobId());
-        }
+        adsRepository.markAsSuccess(adNumber(je), je.jobId());
     }
 
     // ------------------------------------------------------------------------------------    
