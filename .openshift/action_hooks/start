@@ -3,6 +3,8 @@
 # script. The application will work only if it binds to
 # $OPENSHIFT_DIY_IP:8080
 
+export GRADLE_USER_HOME=$OPENSHIFT_TMP_DIR/.gradle/
+
 $OPENSHIFT_REPO_DIR/gradlew build -x test
 
 nohup java -Dserver.port=$OPENSHIFT_DIY_PORT $JAVA_OPTS -Dspring.profiles.active=openshift -jar $OPENSHIFT_REPO_DIR/build/libs/*aqarme-*.jar &
